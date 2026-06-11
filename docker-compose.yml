@@ -1,0 +1,54 @@
+# FastPilot — local dev orchestration.
+#
+#   docker compose up backend frontend        # run the app (talks to Redis Cloud via ../.env)
+#   docker compose --profile test up redis-test   # local RediSearch container for `pytest -m integration`
+#
+# The running app uses Redis Cloud (managed) per D4 — the redis-test container is
+# ONLY the integration-test/CI stand-in and is never used by backend/frontend.
+
+services:
+  backend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      # Shared dev keys: Qdrant / Google / Voyage / Redis Cloud / Opik.
+      # required:false so credential-free workflows (e.g. `--profile test up redis-test`)
+      # still resolve on a fresh clone where .env doesn't exist yet.
+      - path: ../.env
+        required: false
+    environment:
+      - DEBUG=true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Integration-test / CI stand-in for Redis Cloud — RediSearch (HNSW KNN) on board.
+  # Never plain `redis`: the semantic cache needs FT.CREATE / FT.SEARCH.
+  redis-test:
+    image: redis/redis-stack-server:7.4.0-v3
+    profiles: ["test"]
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

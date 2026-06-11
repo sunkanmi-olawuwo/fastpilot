@@ -1,0 +1,17 @@
+# FastPilot backend runtime deps (container image / Railway).
+# Dev + test tooling lives in the repo-root pyproject.toml.
+# Versions mirror the class week-5 stack (Haystack 2.x line).
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.11.7
+pydantic-settings>=2.10.1
+python-dotenv>=1.1.1
+haystack-ai>=2.16.1
+qdrant-haystack>=9.2.0
+fastembed-haystack>=1.5.0
+voyage-embedders-haystack>=1.8.0
+google-genai-haystack>=2.1.1
+google-genai>=1.31.0
+qdrant-client>=1.12.0
+redis[hiredis]>=5.0.0
+opik>=0.1.0

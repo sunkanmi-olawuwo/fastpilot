@@ -1,0 +1,38 @@
+# final-submission/.gitingestignore
+# Excludes raw data, intermediate results, binaries, secrets, and submission tooling.
+# eval_results/ is intentionally NOT excluded — final eval JSONs stay as grading evidence.
+
+archive/
+rag_results/
+data/
+data/raw/
+data/processed/
+data_preparation/outputs/
+
+# Binary / large artifacts
+*.parquet
+*.csv
+*.npy
+*.bin
+*.lock
+
+# Python / build noise
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Frontend / Node (none expected, but guard anyway)
+node_modules/
+dist/
+
+# Secrets
+.env
+**/.streamlit/secrets.toml
+secrets.toml
+
+# Submission tooling (don't ship the scaffolding itself)
+prequalify.py
+final_submission_guidelines.md

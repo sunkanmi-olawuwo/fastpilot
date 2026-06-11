@@ -1,0 +1,100 @@
+"""Application settings (pydantic-settings).
+
+Reads from environment variables (Railway injects these in production) with a
+fallback to a local ``.env`` for development. All secret fields default to ``""``
+so the app *imports* cleanly without credentials — CI stays hermetic, and the
+verify scripts (``scripts/01_verify_environment.py``) are what assert real keys
+are present before anything talks to a live service.
+
+Env var names are UPPERCASE (e.g. ``QDRANT_URL``); pydantic maps them to the
+lowercase fields below because ``case_sensitive=False``.
+"""
+
+from __future__ import annotations
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# final-submission/app/config.py -> app -> final-submission -> repo root
+_APP_DIR = Path(__file__).resolve().parent
+_SUBMISSION_DIR = _APP_DIR.parent
+_REPO_ROOT = _SUBMISSION_DIR.parent
+
+# Repo-root .env carries the shared dev keys (Qdrant/Google/Voyage…); a
+# final-submission/.env (if present) overrides. Both are optional — missing
+# files are ignored and os.environ wins (Railway).
+_ENV_FILES = (_REPO_ROOT / ".env", _SUBMISSION_DIR / ".env")
+
+
+class Settings(BaseSettings):
+    # --- Application ---
+    app_name: str = "FastPilot"
+    debug: bool = False
+    cors_origins: str = "*"  # comma-separated; Phase 1 narrows to the frontend origin
+    playground_enabled: bool = True  # D11 kill switch
+
+    # --- Qdrant Cloud (D1) ---
+    qdrant_url: str = ""
+    qdrant_api_key: str = ""
+    qdrant_collection: str = "rag_accelerator_capstone_week3_hybrid"
+
+    # --- LLM: Google Gemini (D5/D8) ---
+    google_api_key: str = ""
+    llm_model: str = "gemini-2.5-flash"
+    llm_fallback_model: str = "gemini-2.5-flash-lite"
+
+    # --- Retrieval models (D1) ---
+    voyage_api_key: str = ""
+    voyage_embed_model: str = "voyage-4-lite"
+    voyage_dimension: int = 2048
+    voyage_rerank_model: str = "rerank-2.5"
+    sparse_model: str = "Qdrant/bm25"
+    dense_prefetch: int = 100
+    sparse_prefetch: int = 100
+    rerank_input: int = 50  # RRF output handed to the reranker
+    rerank_top_k: int = 10  # final contexts to the LLM
+
+    # --- Redis Cloud (D4): memory + semantic cache ---
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_password: str = ""
+    redis_username: str = "default"
+    redis_ssl: bool = True  # Redis Cloud public TLS endpoint; false for local redis-test
+
+    # --- Semantic cache ---
+    cache_distance_threshold: float = 0.06  # tuned by the Phase 4 experiment
+    cache_ttl: int = 86_400  # 24h
+
+    # --- Conversation memory ---
+    conversation_window_size: int = 10
+    conversation_session_ttl: int = 86_400
+
+    # --- Code executor / Playground (D6/D11) ---
+    executor_wall_timeout_s: int = 15
+    executor_cpu_seconds: int = 10
+    executor_mem_mb: int = 512
+    playground_max_code_bytes: int = 10_240  # 10KB
+    playground_rate_per_min: int = 3
+
+    # --- Opik observability (D8) ---
+    opik_api_key: str = ""
+    opik_workspace: str = "default"
+    opik_project_name: str = "fastpilot"
+
+    # --- Logging ---
+    log_level: str = "INFO"
+
+    model_config = SettingsConfigDict(
+        env_file=_ENV_FILES,
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return cached application settings."""
+    return Settings()

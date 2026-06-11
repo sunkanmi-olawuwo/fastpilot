@@ -1,0 +1,22 @@
+# FastPilot theme — ratified design tokens (round-2 review).
+# Light [theme] is the universally-valid form. The dark variant + full token
+# system ship via the injected CSS layer (frontend/styles.py, Phase 2); the dark
+# values are recorded here as the source of truth.
+#
+# Dark tokens (applied in Phase 2 via CSS / dual-theme keys, verified against the
+# installed Streamlit version):
+#   backgroundColor          #0C1222
+#   secondaryBackgroundColor #151D30
+#   textColor                #E7E9EE
+#   primaryColor             #2DD4BF   (button text #04201B)
+
+[theme]
+base = "light"
+primaryColor = "#0F766E"            # filled buttons (white text 5.6:1 — round-2 contrast fix)
+backgroundColor = "#FAFAF9"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#1C1917"
+font = "sans serif"                  # Source Sans 3 + JetBrains Mono load via CSS @import (B2)
+
+[server]
+headless = true

@@ -1,0 +1,4 @@
+# FastPilot frontend runtime deps (Streamlit). Refined in Phase 2/5.
+streamlit>=1.53.1
+streamlit-monaco>=0.1.3
+requests>=2.32.0
