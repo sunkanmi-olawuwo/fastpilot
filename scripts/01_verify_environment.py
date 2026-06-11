@@ -26,6 +26,7 @@ REQUIRED = [
     ("opik_api_key", "Opik API key"),
 ]
 
+
 def _looks_unset(value: object) -> bool:
     """True for empty values and .env.example placeholders.
 

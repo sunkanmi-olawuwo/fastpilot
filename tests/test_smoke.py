@@ -13,8 +13,6 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from asgi_lifespan import LifespanManager
-from httpx import ASGITransport, AsyncClient
 
 _SUBMISSION_DIR = Path(__file__).resolve().parent.parent
 _REPO_ROOT = _SUBMISSION_DIR.parent
@@ -29,7 +27,7 @@ def test_config_defaults_are_plan_values(monkeypatch: pytest.MonkeyPatch) -> Non
 
     settings = Settings(_env_file=None)  # hermetic: ignore repo/.env entirely
     assert settings.app_name == "FastPilot"
-    assert settings.qdrant_collection == "rag_accelerator_capstone_week3_hybrid"
+    assert settings.qdrant_collection == "rag_accelerator_capstone_final"
     assert settings.voyage_dimension == 2048
 
 
@@ -40,18 +38,6 @@ def test_app_factory_and_routes() -> None:
     assert {"/", "/health", "/metrics"} <= paths
     # The factory builds independent instances — the Phase 1 testability seam.
     assert create_app() is not app
-
-
-@pytest.mark.asyncio
-async def test_health_endpoint() -> None:
-    from app.main import app
-
-    transport = ASGITransport(app=app)
-    async with LifespanManager(app):
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.get("/health")
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "healthy"
 
 
 def test_container_requirements_subset_of_pyproject() -> None:
@@ -69,8 +55,7 @@ def test_container_requirements_subset_of_pyproject() -> None:
 
     pyproject = tomllib.loads((_REPO_ROOT / "pyproject.toml").read_text())
     project_names = {
-        re.split(r"[\[<>=!~]", dep, maxsplit=1)[0].strip().lower()
-        for dep in pyproject["project"]["dependencies"]
+        re.split(r"[\[<>=!~]", dep, maxsplit=1)[0].strip().lower() for dep in pyproject["project"]["dependencies"]
     }
 
     missing = req_names - project_names

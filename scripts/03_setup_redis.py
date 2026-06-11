@@ -21,9 +21,7 @@ import sys
 import _bootstrap  # noqa: F401
 
 from app.config import get_settings
-
-CACHE_INDEX = "fastpilot_cache_idx"
-CACHE_PREFIX = "cache:query:"
+from app.services.semantic_cache import INDEX_NAME, create_cache_index
 
 
 def main() -> int:
@@ -34,21 +32,14 @@ def main() -> int:
     settings = get_settings()
 
     try:
-        import redis
-        from redis.commands.search.field import TagField, TextField, VectorField
-        from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+        import redis  # noqa: F401 - availability check for a friendly message
     except ImportError:
         print("  FAIL  redis not installed — `uv sync`.")
         return 1
 
-    client = redis.Redis(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        password=settings.redis_password or None,
-        username=settings.redis_username or None,
-        ssl=settings.redis_ssl,
-        decode_responses=False,
-    )
+    from app.redis_client import make_redis_client
+
+    client = make_redis_client(settings, decode_responses=False)
 
     # 1. Connectivity
     host_port = f"{settings.redis_host}:{settings.redis_port}"
@@ -73,35 +64,18 @@ def main() -> int:
         return 1
     print(f"  PASS  RediSearch module present (modules: {sorted(modules)})")
 
-    # 3. Create the HNSW index (idempotent)
-    schema = (
-        TextField("query"),
-        TextField("answer"),
-        TagField("contexts"),
-        VectorField(
-            "embedding",
-            "HNSW",
-            {
-                "TYPE": "FLOAT32",
-                "DIM": settings.voyage_dimension,
-                "DISTANCE_METRIC": "COSINE",
-                "M": 40,
-                "EF_CONSTRUCTION": 200,
-                "INITIAL_CAP": 1000,
-            },
-        ),
-    )
-    definition = IndexDefinition(prefix=[CACHE_PREFIX], index_type=IndexType.HASH)
+    # 3. Create the HNSW index (idempotent) — shared with the cache service so the
+    #    pre-flight script and the runtime never drift on schema or index name.
+    dim = settings.voyage_dimension
     try:
-        client.ft(CACHE_INDEX).create_index(fields=schema, definition=definition)
-        dim = settings.voyage_dimension
-        print(f"  PASS  created index '{CACHE_INDEX}' (HNSW, COSINE, DIM={dim})")
-    except redis.ResponseError as exc:
-        if "Index already exists" in str(exc):
-            print(f"  PASS  index '{CACHE_INDEX}' already exists (idempotent)")
-        else:
-            print(f"  FAIL  FT.CREATE failed: {exc}")
-            return 1
+        created = create_cache_index(client, dimension=dim)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  FAIL  FT.CREATE failed: {exc}")
+        return 1
+    if created:
+        print(f"  PASS  created index '{INDEX_NAME}' (HNSW, COSINE, DIM={dim})")
+    else:
+        print(f"  PASS  index '{INDEX_NAME}' already exists (idempotent)")
 
     print("=" * 60)
     print("  Redis ready for the semantic cache.")

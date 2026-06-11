@@ -49,6 +49,21 @@ class FeedbackResponse(BaseModel):
     feedback_key: Optional[str] = None
 
 
+# --- Conversation ---
+class ConversationMessage(BaseModel):
+    msg_id: str
+    role: str  # "user" | "assistant"
+    content: str
+    timestamp: float
+    metadata: Optional[dict[str, Any]] = None
+
+
+class ConversationResponse(BaseModel):
+    session_id: str
+    messages: list[ConversationMessage] = Field(default_factory=list)
+    session_info: Optional[dict[str, Any]] = None
+
+
 # --- Health / metrics ---
 class HealthResponse(BaseModel):
     status: str  # "healthy" | "degraded"

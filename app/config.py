@@ -15,6 +15,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # final-submission/app/config.py -> app -> final-submission -> repo root
@@ -34,11 +35,12 @@ class Settings(BaseSettings):
     debug: bool = False
     cors_origins: str = "*"  # comma-separated; Phase 1 narrows to the frontend origin
     playground_enabled: bool = True  # D11 kill switch
+    dogfood_enabled: bool = True  # write the real-usage log (plan §11.2); off in tests
 
     # --- Qdrant Cloud (D1) ---
     qdrant_url: str = ""
     qdrant_api_key: str = ""
-    qdrant_collection: str = "rag_accelerator_capstone_week3_hybrid"
+    qdrant_collection: str = "rag_accelerator_capstone_final"
 
     # --- LLM: Google Gemini (D5/D8) ---
     google_api_key: str = ""
@@ -96,5 +98,15 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Return cached application settings."""
+    """Return cached application settings.
+
+    Also loads the ``.env`` files into ``os.environ`` (without overriding values
+    already set — Railway wins). Pydantic reading ``env_file`` does *not* populate
+    ``os.environ``, but the Haystack components (Voyage/FastEmbed/Google generators,
+    ``voyageai.Client()``) read their keys straight from ``os.environ`` — so we
+    mirror the keys there, exactly as the week-3/week-4 cloud scripts do.
+    """
+    for env_file in _ENV_FILES:
+        if env_file.exists():
+            load_dotenv(env_file, override=False)
     return Settings()
