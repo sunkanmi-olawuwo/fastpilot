@@ -212,3 +212,22 @@ def test_mobile_chat_answer_no_overflow(ui_server, browser):
     scroll_w = page.evaluate("document.documentElement.scrollWidth")
     assert scroll_w <= 392, f"horizontal overflow at 390px: scrollWidth={scroll_w}"
     page.close()
+
+
+def test_mobile_agent_timeline_no_overflow(ui_server, browser):
+    """AC3.5: the agent step-timeline + per-attempt st.code blocks + terminal output
+    must stay readable at 390px with no horizontal overflow — code blocks scroll
+    inside themselves rather than blowing out the viewport."""
+    from playwright.sync_api import expect
+
+    _ARTIFACTS.mkdir(exist_ok=True)
+    page = _open(browser, 390, "dark")
+    page.goto(ui_server, wait_until="domcontentloaded")
+    page.get_by_text("Write & run a sample endpoint").click()
+    # Run to completion (✗ attempt 1 → ✓ attempt 2) so the full timeline + both code
+    # blocks + terminal are on screen when we measure.
+    expect(page.get_by_text("exit 0", exact=False).first).to_be_visible(timeout=40_000)
+    page.screenshot(path=str(_ARTIFACTS / "agent_390_dark.png"), full_page=True)
+    scroll_w = page.evaluate("document.documentElement.scrollWidth")
+    assert scroll_w <= 392, f"horizontal overflow at 390px: scrollWidth={scroll_w}"
+    page.close()
