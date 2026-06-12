@@ -1,22 +1,27 @@
-# FastPilot theme — ratified design tokens (round-2 review).
-# Light [theme] is the universally-valid form. The dark variant + full token
-# system ship via the injected CSS layer (frontend/styles.py, Phase 2); the dark
-# values are recorded here as the source of truth.
-#
-# Dark tokens (applied in Phase 2 via CSS / dual-theme keys, verified against the
-# installed Streamlit version):
-#   backgroundColor          #0C1222
-#   secondaryBackgroundColor #151D30
-#   textColor                #E7E9EE
-#   primaryColor             #2DD4BF   (button text #04201B)
+# FastPilot theme — ratified design tokens (round-2 review), BOTH themes.
+# Streamlit >=1.46 supports [theme.light] / [theme.dark]; the app follows the
+# viewer's OS/browser appearance by default (override in Settings → Appearance).
+# Native widgets (chat, buttons, radio, toggle, sidebar) are themed here; our
+# custom elements (chips, badges, citations, sources, terminal) carry matching
+# light/dark values in the injected CSS layer (frontend/styles.py).
 
 [theme]
-base = "light"
-primaryColor = "#0F766E"            # filled buttons (white text 5.6:1 — round-2 contrast fix)
+font = "sans-serif"
+
+# primaryColor uses the accessible #0F766E so filled-button text passes 4.5:1
+# (white-on-#0D9488 was 3.0:1 — round-2 contrast fix). The brand #0D9488 lives in
+# the CSS layer for glyphs/borders/citations (3:1 graphic floor).
+[theme.light]
+primaryColor = "#0F766E"
 backgroundColor = "#FAFAF9"
 secondaryBackgroundColor = "#FFFFFF"
 textColor = "#1C1917"
-font = "sans serif"                  # Source Sans 3 + JetBrains Mono load via CSS @import (B2)
+
+[theme.dark]
+primaryColor = "#2DD4BF"
+backgroundColor = "#0C1222"
+secondaryBackgroundColor = "#151D30"
+textColor = "#E7E9EE"
 
 [server]
 headless = true

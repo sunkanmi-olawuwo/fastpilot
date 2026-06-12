@@ -15,6 +15,8 @@ data_preparation/outputs/
 *.npy
 *.bin
 *.lock
+*.png
+tests/visual/artifacts/
 
 # Python / build noise
 __pycache__/

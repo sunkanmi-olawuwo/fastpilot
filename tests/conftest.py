@@ -19,8 +19,11 @@ import pytest_asyncio
 # --- Network guard --------------------------------------------------------
 @pytest.fixture(autouse=True)
 def _no_network(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
-    if request.node.get_closest_marker("integration") or request.node.get_closest_marker("live"):
-        return
+    # integration (redis-stack), live (real APIs), and visual (localhost servers +
+    # the Playwright CDP socket) all make real connections by design.
+    for marker in ("integration", "live", "visual"):
+        if request.node.get_closest_marker(marker):
+            return
 
     def _blocked(*_a: object, **_k: object):  # noqa: ANN202
         raise RuntimeError(
@@ -210,9 +213,7 @@ async def build_client(*, rag=None, cache=None, conversation=None, router=None, 
         redis_client=fakeredis.FakeRedis(decode_responses=True),
         rewriter=FakeChatGenerator(text=rewriter_text),
     )
-    set_services(
-        rag=rag or FakePipeline(), cache=cache, conversation=conversation, router=router or FakeRouter()
-    )
+    set_services(rag=rag or FakePipeline(), cache=cache, conversation=conversation, router=router or FakeRouter())
 
     from app.main import create_app
 

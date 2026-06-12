@@ -1,0 +1,62 @@
+[
+  {
+    "id": "path_param",
+    "concept": "path parameters",
+    "task": "Write and run a FastAPI endpoint GET /items/{item_id} that takes an int path parameter and returns {\"item_id\": item_id}. Verify it returns 200 for /items/7.",
+    "expect": "200 with item_id echoed; a non-int path 422s"
+  },
+  {
+    "id": "query_param",
+    "concept": "query parameters",
+    "task": "Write and run a FastAPI endpoint GET /search with an optional query parameter q (str, default None) that returns {\"q\": q}. Verify both a present and an absent q.",
+    "expect": "200 with q echoed or null"
+  },
+  {
+    "id": "pydantic_validation",
+    "concept": "pydantic validation",
+    "task": "Write and run a POST /users endpoint that accepts a Pydantic User model (name: str, age: int with a constraint age > 0). Verify a valid body returns 200 and a negative age returns 422.",
+    "expect": "valid -> 200, age=-1 -> 422"
+  },
+  {
+    "id": "depends",
+    "concept": "dependency injection",
+    "task": "Write and run a FastAPI endpoint GET /items that uses a Depends() pagination dependency (skip: int = 0, limit: int = 10) and returns the resolved dict. Verify skip is read from the query string.",
+    "expect": "200 with {skip, limit} resolved"
+  },
+  {
+    "id": "status_code",
+    "concept": "status codes",
+    "task": "Write and run a POST /items endpoint declared with status_code=201 that returns the created item. Verify the response status is 201.",
+    "expect": "201 Created"
+  },
+  {
+    "id": "headers",
+    "concept": "headers",
+    "task": "Write and run a FastAPI endpoint that reads a custom request header X-Token via Header() and returns {\"x_token\": value}. Verify it echoes a supplied header.",
+    "expect": "200 echoing the header"
+  },
+  {
+    "id": "error_handler",
+    "concept": "error handling",
+    "task": "Write and run a GET /items/{item_id} endpoint that raises HTTPException(status_code=404, detail='Item not found') when item_id is unknown. Verify the 404 and its detail.",
+    "expect": "404 with detail 'Item not found'"
+  },
+  {
+    "id": "response_model",
+    "concept": "response_model",
+    "task": "Write and run a POST /users endpoint with a response_model that omits a password field from the returned object. Verify the password is not present in the response.",
+    "expect": "200 with password stripped from the body"
+  },
+  {
+    "id": "background_task",
+    "concept": "background tasks",
+    "task": "Write and run a POST /notify endpoint that uses BackgroundTasks to schedule a callback and returns {\"status\": \"queued\"} with 200. Verify the response.",
+    "expect": "200 with status queued"
+  },
+  {
+    "id": "form_data",
+    "concept": "form data",
+    "task": "Write and run a POST /login endpoint that accepts form fields username and password via Form() and returns {\"username\": username}. Verify a form post returns the username. (May require python-multipart.)",
+    "expect": "200 echoing username (or an honest dependency error if python-multipart is absent)"
+  }
+]

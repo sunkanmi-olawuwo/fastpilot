@@ -74,7 +74,7 @@ class OutputValidator:
 
 REFUSAL_MESSAGE = (
     "That request looks like it's trying to change my instructions, so I can't run it. "
-    "Ask me about FastAPI instead — routing, validation, auth, deployment, and more."
+    "Ask me about FastAPI instead — routing, validation, auth, testing, deployment."
 )
 
 _input_guard: Optional[InputGuard] = None

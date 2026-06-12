@@ -159,3 +159,93 @@ async def test_health_healthy_when_all_up(api_client):
     health = (await api_client.get("/health")).json()
     assert health["status"] == "healthy"
     assert set(health["components"]) == {"rag_pipeline", "semantic_cache", "conversation"}
+
+
+# --- Root + conversation echo ---------------------------------------------
+async def test_root_lists_endpoints(api_client):
+    body = (await api_client.get("/")).json()
+    assert body["name"]
+    assert "/query" in body["endpoints"]
+    assert "/health" in body["endpoints"]
+
+
+async def test_conversation_echoes_history(api_client):
+    s = "sess_convo_echo"
+    await api_client.post("/query", json={"query": "How do I add CORS middleware?", "session_id": s})
+    convo = (await api_client.get(f"/conversation/{s}")).json()
+    assert convo["session_id"] == s
+    roles = [m["role"] for m in convo["messages"]]
+    assert roles == ["user", "assistant"]
+    assert convo["session_info"]["total_messages"] == 2
+
+
+# --- Stream cache-hit path -------------------------------------------------
+async def test_stream_cache_hit_replays_cached_answer(api_client):
+    # No session_id → each call is a fresh session, so the standalone == original query
+    # and the repeat lands on the cache-hit branch of the stream endpoint.
+    q = {"query": "How do I serve static files?"}
+    first = await _events(api_client, q)
+    assert first[-1][1]["cache_hit"] is False
+    second = await _events(api_client, q)
+    names = [e for e, _ in second]
+    cache_status = next(d for e, d in second if e == "cache_status")
+    assert cache_status["cache_hit"] is True
+    classification = next(d for e, d in second if e == "classification")
+    assert classification["confidence"] == 1.0  # cached answers report full confidence
+    assert "context" in names and "token" in names
+    assert second[-1][0] == "done"
+    assert second[-1][1]["cache_hit"] is True
+
+
+# --- Error surfaces (no 5xx leakage where the design promises graceful) ----
+async def test_query_returns_503_on_generation_failure():
+    class _GenBoom(FakePipeline):
+        async def generate(self, query, contexts, prompt_messages):
+            raise RuntimeError("gemini upstream 500")
+
+    async with build_client(rag=_GenBoom()) as client:
+        resp = await client.post("/query", json={"query": "How do I add a background task?"})
+    assert resp.status_code == 503  # generation failure → graceful 503, not an opaque 500
+
+
+async def test_stream_outer_exception_emits_error_event():
+    class _RetrieveBoom(FakePipeline):
+        async def retrieve(self, query, *, dense_embedding=None, max_retries=3):
+            raise RuntimeError("qdrant unreachable")
+
+    async with build_client(rag=_RetrieveBoom()) as client:
+        events = await _events(client, {"query": "How do I paginate results?"})
+    names = [e for e, _ in events]
+    assert names[0] == "session"
+    assert "error" in names  # setup failure surfaces as an error event, never a hung stream
+
+
+async def test_metrics_get_stats_failure_hits_global_handler():
+    """An unexpected error reaches the app's global handler → a clean 500 JSON body.
+    (Built with raise_app_exceptions=False so the test sees the handler's response
+    rather than ASGI re-raising it, matching real ASGI-server behaviour.)"""
+    import fakeredis
+    from app.services import reset_services, set_services
+    from app.services.conversation import ConversationService
+    from asgi_lifespan import LifespanManager
+    from httpx import ASGITransport, AsyncClient
+
+    class _BoomStatsCache(FakeCache):
+        def get_stats(self):
+            raise RuntimeError("stats backend exploded")
+
+    reset_services()
+    conv = ConversationService(redis_client=fakeredis.FakeRedis(decode_responses=True), rewriter=FakeChatGenerator())
+    set_services(rag=FakePipeline(), cache=_BoomStatsCache(), conversation=conv, router=None)
+    from app.main import create_app
+    from tests.conftest import FakeRouter
+
+    set_services(router=FakeRouter())
+    app = create_app()
+    async with LifespanManager(app):
+        transport = ASGITransport(app=app, raise_app_exceptions=False)
+        async with AsyncClient(transport=transport, base_url="http://t") as client:
+            resp = await client.get("/metrics")
+    reset_services()
+    assert resp.status_code == 500
+    assert resp.json()["error"] == "Internal server error"

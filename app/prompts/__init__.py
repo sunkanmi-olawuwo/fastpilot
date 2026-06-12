@@ -2,6 +2,10 @@
 
 from app.prompts.registry import fetch_prompt, register_prompts
 from app.prompts.templates import (
+    AGENT_CODE_PROMPT,
+    AGENT_EXPLAIN_PROMPT,
+    AGENT_FIX_PROMPT,
+    AGENT_PLAN_PROMPT,
     CLASSIFICATION_PROMPT,
     DEFAULT_QUERY_TYPE,
     QUERY_TYPES,
@@ -15,6 +19,10 @@ __all__ = [
     "DEFAULT_QUERY_TYPE",
     "CLASSIFICATION_PROMPT",
     "REWRITE_SYSTEM_PROMPT",
+    "AGENT_PLAN_PROMPT",
+    "AGENT_CODE_PROMPT",
+    "AGENT_FIX_PROMPT",
+    "AGENT_EXPLAIN_PROMPT",
     "register_prompts",
     "fetch_prompt",
 ]

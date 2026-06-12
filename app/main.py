@@ -31,16 +31,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app import dogfood, observability
+from app.augmentations.agent_orchestrator import AgentOrchestrator, extract_code
+from app.augmentations.code_executor import get_executor
+from app.augmentations.rate_limit import RateLimiter
 from app.augmentations.security import REFUSAL_MESSAGE, get_input_guard
 from app.config import get_settings
 from app.formatting import source_label
 from app.logging_config import configure_logging
 from app.models import (
+    AgentRequest,
     ContextItem,
     ConversationMessage,
     ConversationResponse,
+    ExecuteRequest,
+    ExecuteResult,
     FeedbackRequest,
     FeedbackResponse,
+    FixRequest,
+    FixResponse,
     HealthResponse,
     MetricsResponse,
     QueryRequest,
@@ -226,18 +234,34 @@ async def _run_query(svc: _Services, app: FastAPI, query_text: str, session_id: 
     if cached:
         query_type = cached.get("query_type", "FACTUAL")
         msg_id, latency = await _finalize_turn(
-            svc, app, session_id=session_id, user_query=query_text, answer=cached["answer"],
-            contexts=cached["contexts"], query_type=query_type, cache_hit=True,
-            standalone_query=std_log, start=start, cost=0.0,
+            svc,
+            app,
+            session_id=session_id,
+            user_query=query_text,
+            answer=cached["answer"],
+            contexts=cached["contexts"],
+            query_type=query_type,
+            cache_hit=True,
+            standalone_query=std_log,
+            start=start,
+            cost=0.0,
         )
         meta = {
-            "cache_hit": True, "latency_ms": latency, "cost_usd": 0.0, "query_type": query_type,
-            "distance": cached.get("distance", 0), "is_follow_up": is_follow_up,
-            "standalone_query": std_log, "trace_id": trace_id,
+            "cache_hit": True,
+            "latency_ms": latency,
+            "cost_usd": 0.0,
+            "query_type": query_type,
+            "distance": cached.get("distance", 0),
+            "is_follow_up": is_follow_up,
+            "standalone_query": std_log,
+            "trace_id": trace_id,
         }
         response = QueryResponse(
-            answer=cached["answer"], contexts=[ContextItem(**c) for c in cached["contexts"]],
-            metadata=meta, session_id=session_id, msg_id=msg_id,
+            answer=cached["answer"],
+            contexts=[ContextItem(**c) for c in cached["contexts"]],
+            metadata=meta,
+            session_id=session_id,
+            msg_id=msg_id,
         )
         return response, query_type, True
 
@@ -249,18 +273,36 @@ async def _run_query(svc: _Services, app: FastAPI, query_text: str, session_id: 
         await _cache_set(svc.cache, standalone, answer, contexts, query_type, prep.get("query_embedding"))
     cost = _estimate_cost((2 if is_follow_up else 1) + 1)
     msg_id, latency = await _finalize_turn(
-        svc, app, session_id=session_id, user_query=query_text, answer=answer, contexts=contexts,
-        query_type=query_type, cache_hit=False, standalone_query=std_log, start=start, cost=cost,
+        svc,
+        app,
+        session_id=session_id,
+        user_query=query_text,
+        answer=answer,
+        contexts=contexts,
+        query_type=query_type,
+        cache_hit=False,
+        standalone_query=std_log,
+        start=start,
+        cost=cost,
     )
     meta = {
-        "cache_hit": False, "latency_ms": latency, "cost_usd": cost, "query_type": query_type,
-        "query_type_confidence": classification["confidence"], "num_contexts": len(contexts),
+        "cache_hit": False,
+        "latency_ms": latency,
+        "cost_usd": cost,
+        "query_type": query_type,
+        "query_type_confidence": classification["confidence"],
+        "num_contexts": len(contexts),
         "retrieval_time_seconds": retrieval.metadata.get("retrieval_time_seconds", 0),
-        "is_follow_up": is_follow_up, "standalone_query": std_log, "trace_id": trace_id,
+        "is_follow_up": is_follow_up,
+        "standalone_query": std_log,
+        "trace_id": trace_id,
     }
     response = QueryResponse(
-        answer=answer, contexts=[ContextItem(**c) for c in contexts],
-        metadata=meta, session_id=session_id, msg_id=msg_id,
+        answer=answer,
+        contexts=[ContextItem(**c) for c in contexts],
+        metadata=meta,
+        session_id=session_id,
+        msg_id=msg_id,
     )
     return response, query_type, False
 
@@ -289,6 +331,11 @@ async def lifespan(app: FastAPI):
     app.state.cache = get_semantic_cache()
     app.state.conversation = get_conversation_service()
     app.state.router = get_query_router()
+    app.state.executor = get_executor()
+    app.state.rate_limiter = RateLimiter(
+        redis_client=getattr(app.state.conversation, "redis", None),
+        per_minute=settings.playground_rate_per_min,
+    )
     app.state.request_count = 0
     app.state.total_latency_ms = 0.0
     app.state.total_cost_usd = 0.0
@@ -400,9 +447,17 @@ def create_app() -> FastAPI:
                         await asyncio.sleep(0.02)
                     std_log = standalone if setup["is_follow_up"] else None
                     msg_id, latency_ms = await _finalize_turn(
-                        svc, app_ref, session_id=session_id, user_query=request.query,
-                        answer=cached["answer"], contexts=cached["contexts"], query_type=query_type,
-                        cache_hit=True, standalone_query=std_log, start=start, cost=0.0,
+                        svc,
+                        app_ref,
+                        session_id=session_id,
+                        user_query=request.query,
+                        answer=cached["answer"],
+                        contexts=cached["contexts"],
+                        query_type=query_type,
+                        cache_hit=True,
+                        standalone_query=std_log,
+                        start=start,
+                        cost=0.0,
                     )
                     yield _sse(
                         "done",
@@ -460,9 +515,18 @@ def create_app() -> FastAPI:
                 cost = _estimate_cost(2)
                 std_log = standalone if setup["is_follow_up"] else None
                 msg_id, latency_ms = await _finalize_turn(
-                    svc, app_ref, session_id=session_id, user_query=request.query, answer=answer,
-                    contexts=contexts, query_type=query_type, cache_hit=False, standalone_query=std_log,
-                    start=start, cost=cost, fallback_used=fallback_used,
+                    svc,
+                    app_ref,
+                    session_id=session_id,
+                    user_query=request.query,
+                    answer=answer,
+                    contexts=contexts,
+                    query_type=query_type,
+                    cache_hit=False,
+                    standalone_query=std_log,
+                    start=start,
+                    cost=cost,
+                    fallback_used=fallback_used,
                 )
                 yield _sse(
                     "done",
@@ -495,6 +559,105 @@ def create_app() -> FastAPI:
                     producer.cancel()
 
         return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+    @application.post("/agent/stream", tags=["Agent"])
+    async def agent_stream(request: AgentRequest, http: Request):  # noqa: ANN202
+        svc = _Services(http.app)
+        executor = http.app.state.executor
+        session_id = request.session_id or svc.conversation.create_session_id()
+
+        async def gen():
+            observability.set_thread_id(session_id)
+            yield _sse("session", {"session_id": session_id})
+            msg_id = _new_msg_id()
+            orch = AgentOrchestrator(pipeline=svc.pipeline, executor=executor, budget_s=settings.agent_budget_s)
+            answer_parts: list[str] = []
+            success = False
+            try:
+                async for ev in orch.run(request.task):
+                    if ev["event"] == "token":
+                        answer_parts.append(ev["data"]["token"])
+                    elif ev["event"] == "done":
+                        success = bool(ev["data"].get("success"))
+                        ev["data"].update({"msg_id": msg_id, "session_id": session_id})
+                    yield _sse(ev["event"], ev["data"])
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("Agent run failed")
+                yield _sse("error", {"error": str(exc) if settings.debug else "Agent run failed"})
+                return
+            dogfood.log_interaction(
+                session_id=session_id,
+                msg_id=msg_id,
+                mode="agent",
+                query=request.task,
+                answer="".join(answer_parts),
+                contexts=[],
+                cache_hit=False,
+                query_type="CODE_GENERATION",
+                latency_ms=0.0,
+            )
+            logger.info("agent done session=%s msg=%s success=%s", session_id[:14], msg_id, success)
+
+        return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
+    @application.post("/execute", response_model=ExecuteResult, tags=["Playground"])
+    async def execute(request: ExecuteRequest, http: Request):  # noqa: ANN202
+        if not settings.playground_enabled:
+            raise HTTPException(status_code=404, detail="Playground is disabled.")
+        if len(request.code.encode("utf-8")) > settings.playground_max_code_bytes:
+            return ExecuteResult(guard="oversize", stderr="That's a lot of code — the sandbox takes up to 10 KB.")
+        allowed, retry = http.app.state.rate_limiter.check(request.session_id)
+        if not allowed:
+            return ExecuteResult(
+                guard="rate_limit",
+                stderr=(
+                    "Easy there — 3 runs a minute keeps the sandbox happy. "
+                    f"Your next run unlocks in {retry} seconds."
+                ),
+            )
+        result = await asyncio.to_thread(http.app.state.executor.run, request.code)
+        if result.blocked:
+            return ExecuteResult(
+                guard="denylist",
+                exit_code=result.exit_code,
+                stderr="That code uses something the sandbox doesn't allow (like network or subprocess calls). "
+                "Stick to fastapi, pydantic, and the standard library.",
+            )
+        logger.info(
+            "execute session=%s exit=%s dur=%dms",
+            (request.session_id or "anon")[:14],
+            result.exit_code,
+            result.duration_ms,
+        )
+        return ExecuteResult(
+            ok=result.ok,
+            exit_code=result.exit_code,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            duration_ms=result.duration_ms,
+        )
+
+    @application.post("/fix", response_model=FixResponse, tags=["Playground"])
+    async def fix(request: FixRequest, http: Request):  # noqa: ANN202
+        if not settings.playground_enabled:
+            raise HTTPException(status_code=404, detail="Playground is disabled.")
+        allowed, _ = http.app.state.rate_limiter.check(request.session_id)
+        if not allowed:
+            return FixResponse(fixed_code=request.code, guard="rate_limit")
+        pipe = http.app.state.pipeline
+        if not pipe.is_healthy():
+            raise HTTPException(status_code=503, detail="Code model unavailable.")
+        from haystack.dataclasses import ChatMessage
+
+        from app.prompts import AGENT_FIX_PROMPT
+
+        user = (
+            f"TASK: fix this FastAPI code so it runs.\n\nPREVIOUS CODE:\n{request.code}\n\n"
+            f"TRACEBACK / STDERR:\n{request.stderr}\n\nCONTEXT:\n(none — fix from the traceback)"
+        )
+        messages = [ChatMessage.from_system(AGENT_FIX_PROMPT), ChatMessage.from_user(user)]
+        raw = await pipe.generate(user, [], messages)
+        return FixResponse(fixed_code=extract_code(raw))
 
     @application.post("/feedback", response_model=FeedbackResponse, tags=["Feedback"])
     async def feedback(request: FeedbackRequest):  # noqa: ANN202

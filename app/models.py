@@ -75,3 +75,34 @@ class MetricsResponse(BaseModel):
     avg_latency_ms: float = 0.0
     total_cost_usd: float = 0.0
     cache_stats: dict[str, Any] = Field(default_factory=dict)
+
+
+# --- Agent / Playground (Phase 3) ---
+class AgentRequest(BaseModel):
+    task: str = Field(..., min_length=1, max_length=2000)
+    session_id: Optional[str] = None
+
+
+class ExecuteRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=100_000)  # hard cap; 10KB soft-guard in handler
+    session_id: str = ""
+
+
+class ExecuteResult(BaseModel):
+    ok: bool = False
+    exit_code: int = -1
+    stdout: str = ""
+    stderr: str = ""
+    duration_ms: int = 0
+    guard: Optional[str] = None  # "oversize" | "rate_limit" | "denylist" | None
+
+
+class FixRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=100_000)
+    stderr: str = ""
+    session_id: str = ""
+
+
+class FixResponse(BaseModel):
+    fixed_code: str
+    guard: Optional[str] = None

@@ -79,6 +79,7 @@ class Settings(BaseSettings):
     executor_mem_mb: int = 512
     playground_max_code_bytes: int = 10_240  # 10KB
     playground_rate_per_min: int = 3
+    agent_budget_s: int = 90  # total wall budget for an agent run before honest-failure
 
     # --- Opik observability (D8) ---
     opik_api_key: str = ""
