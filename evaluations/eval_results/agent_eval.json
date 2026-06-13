@@ -1,0 +1,78 @@
+{
+  "n": 10,
+  "success_with_correction": 1.0,
+  "success_first_attempt_only": 0.5,
+  "self_correction_delta": 0.5,
+  "results": [
+    {
+      "id": "path_param",
+      "concept": "path parameters",
+      "first_attempt_ok": false,
+      "success": true,
+      "attempts": 2
+    },
+    {
+      "id": "query_param",
+      "concept": "query parameters",
+      "first_attempt_ok": true,
+      "success": true,
+      "attempts": 1
+    },
+    {
+      "id": "pydantic_validation",
+      "concept": "pydantic validation",
+      "first_attempt_ok": false,
+      "success": true,
+      "attempts": 2
+    },
+    {
+      "id": "depends",
+      "concept": "dependency injection",
+      "first_attempt_ok": false,
+      "success": true,
+      "attempts": 2
+    },
+    {
+      "id": "status_code",
+      "concept": "status codes",
+      "first_attempt_ok": false,
+      "success": true,
+      "attempts": 2
+    },
+    {
+      "id": "headers",
+      "concept": "headers",
+      "first_attempt_ok": true,
+      "success": true,
+      "attempts": 1
+    },
+    {
+      "id": "error_handler",
+      "concept": "error handling",
+      "first_attempt_ok": true,
+      "success": true,
+      "attempts": 1
+    },
+    {
+      "id": "response_model",
+      "concept": "response_model",
+      "first_attempt_ok": false,
+      "success": true,
+      "attempts": 2
+    },
+    {
+      "id": "background_task",
+      "concept": "background tasks",
+      "first_attempt_ok": true,
+      "success": true,
+      "attempts": 1
+    },
+    {
+      "id": "form_data",
+      "concept": "form data",
+      "first_attempt_ok": true,
+      "success": true,
+      "attempts": 1
+    }
+  ]
+}

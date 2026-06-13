@@ -26,7 +26,6 @@ from app.prompts import (
     DEFAULT_QUERY_TYPE,
     QUERY_TYPES,
     fetch_prompt,
-    register_prompts,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +38,7 @@ class QueryRouter:
         self._google_key = s.google_api_key
         self._llm = llm
         self._llm_built = llm is not None
-        register_prompts()  # no-op without Opik
+        # Prompt registration happens once at app startup (see main.lifespan), not per router build.
 
     def _get_llm(self) -> Any:
         if not self._llm_built:

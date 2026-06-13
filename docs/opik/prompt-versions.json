@@ -1,0 +1,31 @@
+{
+  "workspace": "sunkanmi-daniel",
+  "project": "fastpilot",
+  "source": "Opik prompt API (UI render is a Comet Cloud issue; data confirmed server-side)",
+  "prompts": [
+    {
+      "query_type": "FACTUAL",
+      "name": "rag-factual",
+      "commit": "dd7b0a4e",
+      "prompt_preview": "You are FastPilot, a documentation assistant specializing in FastAPI \u2014 its routing, reques"
+    },
+    {
+      "query_type": "HOW_TO",
+      "name": "rag-how-to",
+      "commit": "747b4afd",
+      "prompt_preview": "You are FastPilot, a documentation assistant specializing in FastAPI \u2014 its routing, reques"
+    },
+    {
+      "query_type": "TROUBLESHOOTING",
+      "name": "rag-troubleshooting",
+      "commit": "dd5a023e",
+      "prompt_preview": "You are FastPilot, a documentation assistant specializing in FastAPI \u2014 its routing, reques"
+    },
+    {
+      "query_type": "CODE_GENERATION",
+      "name": "rag-code-generation",
+      "commit": "0fe056e6",
+      "prompt_preview": "You are FastPilot, a documentation assistant specializing in FastAPI \u2014 its routing, reques"
+    }
+  ]
+}

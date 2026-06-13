@@ -1,0 +1,84 @@
+{
+  "method": "cache_threshold_calibration",
+  "embed_model": "voyage-4-lite",
+  "dimension": 2048,
+  "configured_threshold": 0.16,
+  "paraphrase_max_distance": 0.3148,
+  "near_miss_min_distance": 0.2274,
+  "separable": false,
+  "strict_ac4_2_achievable": false,
+  "recommended_threshold": 0.159,
+  "recommended_result": {
+    "paraphrase_hits": "4/6",
+    "near_miss_hits": "0/6",
+    "safety_margin_below_nearest_near_miss": 0.0684
+  },
+  "configured_result": {
+    "paraphrase_hits": "4/6",
+    "near_miss_hits": "0/6"
+  },
+  "paraphrase_pairs": [
+    {
+      "a": "How do I add JWT authentication to a FastAPI app?",
+      "b": "How can I implement JWT auth in FastAPI?",
+      "distance": 0.035
+    },
+    {
+      "a": "What are path parameters?",
+      "b": "How do path parameters work in FastAPI?",
+      "distance": 0.1925
+    },
+    {
+      "a": "How do I validate a request body with Pydantic?",
+      "b": "How can I validate request payloads using a Pydantic model?",
+      "distance": 0.1557
+    },
+    {
+      "a": "How do I return a 404 error?",
+      "b": "How can I respond with a 404 Not Found?",
+      "distance": 0.1502
+    },
+    {
+      "a": "How do I declare a query parameter?",
+      "b": "How can I add a query param to an endpoint?",
+      "distance": 0.3148
+    },
+    {
+      "a": "How do I use dependency injection with Depends?",
+      "b": "How does Depends() work for injecting dependencies?",
+      "distance": 0.0895
+    }
+  ],
+  "near_miss_pairs": [
+    {
+      "a": "What are path parameters?",
+      "b": "What are query parameters?",
+      "distance": 0.2856
+    },
+    {
+      "a": "How do I return a 404 error?",
+      "b": "How do I return a 422 error?",
+      "distance": 0.3146
+    },
+    {
+      "a": "How do I add a path parameter?",
+      "b": "How do I add a query parameter?",
+      "distance": 0.2274
+    },
+    {
+      "a": "How do I handle a GET request?",
+      "b": "How do I handle a POST request?",
+      "distance": 0.3864
+    },
+    {
+      "a": "What is a request body?",
+      "b": "What is a response model?",
+      "distance": 0.5557
+    },
+    {
+      "a": "How do I add JWT authentication?",
+      "b": "How do I add OAuth2 password authentication?",
+      "distance": 0.417
+    }
+  ]
+}

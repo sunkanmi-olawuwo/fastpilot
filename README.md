@@ -41,14 +41,22 @@ uv run python final-submission/scripts/01_verify_environment.py
 uv run python final-submission/scripts/02_verify_collections.py
 uv run python final-submission/scripts/03_setup_redis.py
 
-# 3. Run the stack locally (talks to Redis Cloud via ../.env)
-cd final-submission && docker compose up backend frontend
-#   backend → http://localhost:8000   (docs at /docs)
-#   frontend → http://localhost:8501
+# 3. Run the stack locally (talks to Redis Cloud + Qdrant/Voyage/Gemini/Opik via ../.env)
 
-# Or run the backend directly:
-cd final-submission && uvicorn app.main:app --reload
+#  Option A — Docker (mirrors the Railway two-service topology):
+cd final-submission && docker compose up backend frontend --build
+
+#  Option B — no Docker, two terminals (from the repo root):
+#    Terminal 1 — backend (FastAPI → http://localhost:8000, docs at /docs):
+.venv/bin/python -m uvicorn app.main:app --app-dir final-submission --port 8000 --reload
+#    Terminal 2 — frontend (Streamlit → http://localhost:8501); run from frontend/ so the theme loads:
+cd final-submission/frontend && ../../.venv/bin/python -m streamlit run app.py
 ```
+
+> The frontend finds the backend via `API_BASE_URL` (default `http://localhost:8000`).
+> `.env` is loaded by absolute path, so the working directory doesn't affect config.
+> Note: after a repo move the venv's `uvicorn`/`streamlit` console scripts can carry a stale
+> shebang — invoking via `python -m` (above) avoids it; `uv run uvicorn …` also works.
 
 ## Tests
 

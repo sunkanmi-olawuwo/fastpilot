@@ -323,6 +323,11 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     configure_logging("DEBUG" if settings.debug else settings.log_level)
     observability.configure_opik(settings.opik_api_key, settings.opik_workspace, settings.opik_project_name)
+    # Push generation templates to Opik's prompt library (D8 versioning/hot-swap) explicitly at
+    # startup — guaranteed + logged, not a side-effect of whether the router happens to be built.
+    from app.prompts import register_prompts
+
+    register_prompts()  # no-op without Opik
     dogfood.set_enabled(settings.dogfood_enabled)
     logger.info("Starting FastPilot backend (debug=%s)", settings.debug)
 

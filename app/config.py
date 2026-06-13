@@ -66,7 +66,9 @@ class Settings(BaseSettings):
     redis_ssl: bool = True  # Redis Cloud public TLS endpoint; false for local redis-test
 
     # --- Semantic cache ---
-    cache_distance_threshold: float = 0.06  # tuned by the Phase 4 experiment
+    cache_distance_threshold: float = 0.16  # Phase-4 calibrated (10_cache_threshold_experiment): safety-optimal
+    # — 4/6 paraphrases hit, 0/6 near-misses (margin 0.068 below the closest near-miss). The bands overlap,
+    # so AC4.2's strict 100%/0% is unachievable; we pick for zero wrong-answer serving. Was 0.06 (too tight).
     cache_ttl: int = 86_400  # 24h
 
     # --- Conversation memory ---
