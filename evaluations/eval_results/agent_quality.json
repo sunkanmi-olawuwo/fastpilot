@@ -1,0 +1,127 @@
+{
+  "ac3_4_citation": {
+    "n_tasks": 6,
+    "tasks_with_citations": 6,
+    "cited_chunks": 27,
+    "cited_relevant": 25,
+    "relevance_rate": 0.926,
+    "all_tasks_cite": true,
+    "passed": true,
+    "per_task": [
+      {
+        "id": "path_param",
+        "has_citations": true,
+        "n_cited": 1,
+        "n_relevant": 1,
+        "apis_used": [
+          "Body",
+          "FastAPI",
+          "Request",
+          "Response",
+          "status",
+          "status_code"
+        ]
+      },
+      {
+        "id": "query_param",
+        "has_citations": true,
+        "n_cited": 6,
+        "n_relevant": 5,
+        "apis_used": [
+          "Body",
+          "FastAPI",
+          "Query",
+          "Request",
+          "Response",
+          "status_code"
+        ]
+      },
+      {
+        "id": "pydantic_validation",
+        "has_citations": true,
+        "n_cited": 3,
+        "n_relevant": 3,
+        "apis_used": [
+          "BaseModel",
+          "Body",
+          "FastAPI",
+          "Field",
+          "Request",
+          "Response",
+          "status",
+          "status_code"
+        ]
+      },
+      {
+        "id": "depends",
+        "has_citations": true,
+        "n_cited": 8,
+        "n_relevant": 7,
+        "apis_used": [
+          "Body",
+          "Depends",
+          "FastAPI",
+          "Response",
+          "status_code"
+        ]
+      },
+      {
+        "id": "status_code",
+        "has_citations": true,
+        "n_cited": 5,
+        "n_relevant": 5,
+        "apis_used": [
+          "BaseModel",
+          "FastAPI",
+          "Request",
+          "Response",
+          "status",
+          "status_code"
+        ]
+      },
+      {
+        "id": "response_model",
+        "has_citations": true,
+        "n_cited": 4,
+        "n_relevant": 4,
+        "apis_used": [
+          "BaseModel",
+          "Body",
+          "EmailStr",
+          "FastAPI",
+          "Field",
+          "Request",
+          "Response",
+          "response_model",
+          "status",
+          "status_code"
+        ]
+      }
+    ]
+  },
+  "ac3_9_fix": {
+    "n": 3,
+    "fixed_clean": 3,
+    "passed": true,
+    "per_snippet": [
+      {
+        "id": "syntax_error",
+        "before_exit": 1,
+        "after_exit": 0,
+        "fixed_clean": true
+      },
+      {
+        "id": "missing_import",
+        "before_exit": 1,
+        "after_exit": 0,
+        "fixed_clean": true
+      },
+      {
+        "id": "failing_assertion",
+        "before_exit": 1,
+        "after_exit": 0,
+        "fixed_clean": true
+      }
+    ]
+  }
+}

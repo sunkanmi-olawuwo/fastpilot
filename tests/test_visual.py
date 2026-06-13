@@ -126,6 +126,20 @@ def test_welcome_renders(ui_server, browser, width, theme):
     page.close()
 
 
+@pytest.mark.parametrize("theme,expected_bg", [("dark", "rgb(12, 18, 34)"), ("light", "rgb(250, 250, 249)")])
+def test_theme_drives_whole_app_surface(ui_server, browser, theme, expected_bg):
+    """The active theme drives the *entire* app surface, not just the custom CSS layer: the
+    `.stApp` background matches the theme token. This guards the in-app light/dark toggle —
+    forcing a theme now makes Streamlit's native surface follow (it used to track only
+    prefers-color-scheme, which is why a manual light choice left half the UI dark)."""
+    page = _open(browser, 1280, theme)
+    page.goto(ui_server, wait_until="load")
+    page.wait_for_timeout(1500)
+    bg = page.evaluate("getComputedStyle(document.querySelector('.stApp')).backgroundColor")
+    assert bg == expected_bg, f"{theme}: .stApp background={bg}, expected {expected_bg}"
+    page.close()
+
+
 def test_chat_flow_renders_answer_and_sources(ui_server, browser):
     from playwright.sync_api import expect
 
@@ -135,6 +149,29 @@ def test_chat_flow_renders_answer_and_sources(ui_server, browser):
     page.get_by_text("Add JWT auth").click()
     expect(page.get_by_text("OAuth2PasswordBearer", exact=False).first).to_be_visible(timeout=30_000)
     page.screenshot(path=str(_ARTIFACTS / "chat_1280_light.png"), full_page=True)
+    page.close()
+
+
+def test_citations_in_code_not_mangled_no_overflow(ui_server, browser):
+    """Regression: citations inside code (inline/fenced) must NOT be wrapped in <sup> —
+    that leaks literal `sup class=...` text into the code and widens non-wrapping code
+    lines into a horizontal scroll. Prose `[1]`/`[2]` still render as superscripts, the
+    in-code `[3]`/`[4]` stay plain, and nothing overflows the viewport. The stub answer
+    carries all four cases."""
+    from playwright.sync_api import expect
+
+    _ARTIFACTS.mkdir(exist_ok=True)
+    page = _open(browser, 1280, "light")
+    page.goto(ui_server, wait_until="domcontentloaded")
+    page.get_by_text("Add JWT auth").click()
+    expect(page.get_by_text("OAuth2PasswordBearer", exact=False).first).to_be_visible(timeout=30_000)
+    # Wait for the LAST snippet so the stream is complete before counting citations.
+    expect(page.get_by_text("verify_token", exact=False).first).to_be_visible(timeout=30_000)
+    body = page.evaluate("document.body.innerText")
+    assert "sup class" not in body, "citation <sup> leaked as literal text (wrapped inside code)"
+    assert page.locator("sup.fp-cite").count() >= 2, "prose [1]/[2] should render as superscripts"
+    scroll_w = page.evaluate("document.documentElement.scrollWidth")
+    assert scroll_w <= 1282, f"horizontal overflow from wide code line: scrollWidth={scroll_w}"
     page.close()
 
 

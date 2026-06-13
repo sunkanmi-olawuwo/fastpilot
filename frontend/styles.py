@@ -123,6 +123,12 @@ sup.fp-cite { color: var(--fp-accent-text); font-weight: 700; font-size: .72em; 
 .fp-disclaimer { text-align: center; font-size: 12px; color: var(--fp-muted); opacity: .85; margin-top: .4rem; }
 .fp-mode-note { font-size: 11.5px; color: var(--fp-muted); opacity: .8; margin: -4px 2px 6px; }
 
+/* Long-content guards: a chat message never forces a horizontal page scroll —
+   code blocks scroll inside themselves, long words/inline-code wrap. */
+[data-testid="stChatMessage"] { overflow-wrap: anywhere; }
+[data-testid="stChatMessage"] pre { overflow-x: auto; max-width: 100%; }
+[data-testid="stChatMessage"] :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+
 /* Mobile */
 @media (max-width: 640px) {
   .block-container { padding: 1rem .75rem 5rem; }
@@ -133,21 +139,73 @@ sup.fp-cite { color: var(--fp-accent-text); font-weight: 700; font-size: .72em; 
 """
 
 
-def inject_css(st) -> None:  # noqa: ANN001 - st passed in to keep this module import-light
+# Forced-theme overrides driven by the in-app toggle. A later :root{} beats the base
+# stylesheet's prefers-color-scheme :root by source order, so the *custom* elements follow
+# the chosen theme — and the native-surface rules (stable data-testid selectors) make
+# Streamlit's own widgets match too, instead of following the OS independently.
+_VARS_LIGHT = (
+    "--fp-text:#1C1917; --fp-app-bg:#FAFAF9; --fp-surface:#FFFFFF; --fp-surface-2:#F5F5F4;"
+    "--fp-border:#E7E5E4; --fp-muted:#78716C; --fp-muted-code:#6B6862;"
+    "--fp-accent:#0D9488; --fp-accent-btn:#0F766E; --fp-accent-text:#0F766E;"
+    "--fp-accent-soft:#CCFBF1; --fp-accent-soft-bd:#99F6E4;"
+    "--fp-danger:#DC2626; --fp-danger-text:#B91C1C; --fp-danger-soft:#FEE2E2;"
+    "--fp-success:#16A34A; --fp-success-text:#15803D;"
+)
+_VARS_DARK = (
+    "--fp-text:#E7E9EE; --fp-app-bg:#0C1222; --fp-surface:#151D30; --fp-surface-2:#0A0F1C;"
+    "--fp-border:#28324A; --fp-muted:#8B94A7; --fp-muted-code:#8B94A7;"
+    "--fp-accent:#2DD4BF; --fp-accent-btn:#2DD4BF; --fp-accent-text:#5EEAD4;"
+    "--fp-accent-soft:#134E4A; --fp-accent-soft-bd:#115E59;"
+    "--fp-danger:#F87171; --fp-danger-text:#FCA5A5; --fp-danger-soft:#3B1A1E;"
+    "--fp-success:#4ADE80; --fp-success-text:#86EFAC;"
+)
+_NATIVE_OVERRIDES = (
+    # Streamlit hardcodes its theme colors per widget (no overridable CSS var), so each native
+    # surface is mapped to our tokens — otherwise a forced theme leaks the OS theme on buttons,
+    # the bottom input bar, expanders, etc. (data-testid / .stButton selectors are stable).
+    'body, .stApp, [data-testid="stHeader"], [data-testid="stBottom"], [data-testid="stBottom"] div'
+    " { background-color: var(--fp-app-bg) !important; }"
+    '[data-testid="stSidebar"] { background-color: var(--fp-surface) !important; }'
+    '.stApp, [data-testid="stSidebar"], [data-testid="stMarkdownContainer"] { color: var(--fp-text); }'
+    ".stButton > button { background-color: var(--fp-surface) !important; color: var(--fp-text) !important; }"
+    # The chat input's baseweb wrapper divs (no testid) also carry the OS theme — scope to
+    # descendants of stChatInput so the whole input box follows the theme, not just the textarea.
+    '[data-testid="stChatInput"], [data-testid="stChatInput"] div, [data-testid="stChatInput"] textarea,'
+    ' [data-testid="stExpander"] details'
+    " { background-color: var(--fp-surface) !important; color: var(--fp-text) !important; }"
+    '[data-testid="stChatInput"] textarea::placeholder { color: var(--fp-muted) !important; }'
+)
+
+
+def inject_css(st, theme: str = "dark") -> None:  # noqa: ANN001 - st passed in to keep this module import-light
+    """Inject the base stylesheet, then force ``theme`` (``"light"``/``"dark"``) on both the
+    custom elements and Streamlit's native surfaces so the in-app toggle controls everything."""
     st.markdown(_CSS, unsafe_allow_html=True)
+    forced = _VARS_DARK if theme == "dark" else _VARS_LIGHT
+    st.markdown(f"<style>:root{{{forced}}} {_NATIVE_OVERRIDES}</style>", unsafe_allow_html=True)
 
 
 # --- Pure helpers ---------------------------------------------------------
 _CITE_RE = re.compile(r"(?<![\w\]])\[(\d+(?:\s*,\s*\d+)*)\]")
+# Fenced ```…``` blocks and inline `…` code. Citations inside these must be left alone:
+# the <sup> HTML renders as *literal text* in a code context, and lengthening a
+# non-wrapping code line is what forces the chat message into a horizontal scroll.
+_CODE_RE = re.compile(r"(```.*?```|`[^`]*`)", re.DOTALL)
+
+
+def _wrap_cites(prose: str) -> str:
+    return _CITE_RE.sub(lambda m: f'<sup class="fp-cite">[{m.group(1)}]</sup>', prose)
 
 
 def render_answer(text: str) -> str:
-    """Wrap inline ``[n]`` citation markers in a styled superscript.
+    """Wrap inline ``[n]`` citation markers in a styled superscript — in PROSE only.
 
-    The negative lookbehind avoids touching list indexing like ``items[0]`` inside
-    code (preceded by a word char). Returns HTML to render with ``unsafe_allow_html``.
+    Fenced and inline code pass through untouched (see ``_CODE_RE``). ``re.split`` with a
+    capturing group yields alternating prose / code segments (code lands at odd indices),
+    so we wrap citations only in the even (prose) ones. The negative lookbehind still
+    guards prose-level indexing like ``items[0]``. Returns HTML for ``unsafe_allow_html``.
     """
-    return _CITE_RE.sub(lambda m: f'<sup class="fp-cite">[{m.group(1)}]</sup>', text)
+    return "".join(seg if i % 2 else _wrap_cites(seg) for i, seg in enumerate(_CODE_RE.split(text)))
 
 
 def badges_html(

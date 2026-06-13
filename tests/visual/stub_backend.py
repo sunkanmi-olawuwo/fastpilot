@@ -42,7 +42,11 @@ _CONTEXTS = [
 ]
 _ANSWER = (
     "To add JWT authentication, create an `OAuth2PasswordBearer` scheme [1] and verify the token "
-    "in a dependency. Issue tokens with an expiry using python-jose, as the template's `security.py` shows [2]."
+    "in a dependency. Issue tokens with an expiry using python-jose, as the template's `security.py` shows [2].\n\n"
+    "```python\n"
+    "oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')  # one shared scheme reused across every protected route in the app [3]\n"  # noqa: E501 (deliberately wide: exercises the code-block overflow guard)
+    "```\n"
+    "See the inline note `verify_token(creds [4])` too."  # citations [3]/[4] sit inside code — must NOT become <sup>
 )
 
 

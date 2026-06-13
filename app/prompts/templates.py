@@ -138,7 +138,8 @@ HARD REQUIREMENTS:
 - Build a FastAPI app, then exercise it IN-PROCESS with `from fastapi.testclient import TestClient`.
 - `print()` the evidence: status codes and JSON bodies for both a valid and an invalid request.
 - Include `assert` statements that fail loudly if behaviour is wrong (this is the self-test).
-- Cite the context chunks you relied on with [n] in a comment near the relevant code.
+- ALWAYS cite your grounding: include at least one `[n]` reference in a comment near the
+  relevant code, pointing at the context chunk you drew the API from — even for simple tasks.
 
 OUTPUT: exactly one ```python code block and nothing else. No prose before or after."""
 
@@ -147,7 +148,8 @@ You are FastPilot's coding agent. Your previous program failed. Given the task, 
 code, and the exact traceback/stderr, return a CORRECTED complete single-file program.
 
 - Fix the specific error shown in the traceback; keep everything that already worked.
-- Same hard requirements: stdlib + fastapi + pydantic only, in-process TestClient, print evidence, asserts.
+- Same hard requirements: stdlib + fastapi + pydantic only, in-process TestClient, print evidence,
+  asserts, and at least one `[n]` citation in a comment (keep the citations from the working code).
 
 OUTPUT: exactly one ```python code block and nothing else."""
 

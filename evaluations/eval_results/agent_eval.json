@@ -1,22 +1,22 @@
 {
   "n": 10,
   "success_with_correction": 1.0,
-  "success_first_attempt_only": 0.4,
-  "self_correction_delta": 0.6,
+  "success_first_attempt_only": 0.5,
+  "self_correction_delta": 0.5,
   "results": [
     {
       "id": "path_param",
       "concept": "path parameters",
-      "first_attempt_ok": true,
+      "first_attempt_ok": false,
       "success": true,
-      "attempts": 1
+      "attempts": 2
     },
     {
       "id": "query_param",
       "concept": "query parameters",
-      "first_attempt_ok": false,
+      "first_attempt_ok": true,
       "success": true,
-      "attempts": 2
+      "attempts": 1
     },
     {
       "id": "pydantic_validation",
@@ -58,14 +58,14 @@
       "concept": "response_model",
       "first_attempt_ok": false,
       "success": true,
-      "attempts": 3
+      "attempts": 2
     },
     {
       "id": "background_task",
       "concept": "background tasks",
-      "first_attempt_ok": false,
+      "first_attempt_ok": true,
       "success": true,
-      "attempts": 2
+      "attempts": 1
     },
     {
       "id": "form_data",
