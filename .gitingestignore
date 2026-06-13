@@ -38,3 +38,4 @@ secrets.toml
 # Submission tooling (don't ship the scaffolding itself)
 prequalify.py
 final_submission_guidelines.md
+REMAINING.md
