@@ -1,0 +1,14 @@
+# Railway deployment config — FastPilot backend (FastAPI).
+# Set this service's Root Directory to `final-submission/app`; Railway then builds from
+# the Dockerfile here and injects $PORT (the Dockerfile CMD binds it). This service is
+# PRIVATE — no public domain; the frontend reaches it at backend.railway.internal.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

@@ -1,0 +1,13 @@
+# Railway deployment config — FastPilot frontend (Streamlit).
+# Set this service's Root Directory to `final-submission/frontend`; Railway builds from the
+# Dockerfile here and injects $PORT (the Dockerfile CMD binds it). Generate the PUBLIC domain
+# on THIS service only — it's the one internet-facing piece. (Streamlit also serves a health
+# endpoint at /_stcore/health if an HTTP healthcheck is wanted; Railway's TCP check suffices.)
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
