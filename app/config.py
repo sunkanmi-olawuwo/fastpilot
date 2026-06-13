@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     sparse_prefetch: int = 100
     rerank_input: int = 50  # RRF output handed to the reranker
     rerank_top_k: int = 10  # final contexts to the LLM
+    # Retrieval-confidence guard (a latency-free slice of CRAG's "know when retrieval is weak"):
+    # if the best reranked chunk scores below this floor, flag low_confidence so the UI can warn
+    # the answer may be outside the FastAPI corpus. Conservative — in-domain top scores run ~0.5–0.85.
+    retrieval_confidence_min: float = 0.3
 
     # --- Redis Cloud (D4): memory + semantic cache ---
     redis_host: str = "localhost"

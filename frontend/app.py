@@ -169,6 +169,8 @@ def _render_assistant(msg: dict, idx: int) -> None:
     note = styles.rewrite_note_html(meta.get("standalone_query"))
     if note:
         st.markdown(note, unsafe_allow_html=True)
+    if meta.get("low_confidence"):
+        st.markdown(styles.low_confidence_note_html(), unsafe_allow_html=True)
     st.markdown(styles.render_answer(msg["content"]), unsafe_allow_html=True)
     _render_sources(msg.get("contexts", []))
     cap = []
@@ -197,6 +199,7 @@ def _stream_answer(prompt: str) -> dict:
     """Stream the assistant answer into placeholders; return the message dict."""
     badge_ph = st.empty()
     note_ph = st.empty()
+    lowconf_ph = st.empty()
     answer_ph = st.empty()
     buffer, contexts, meta = "", [], {}
     rewritten = cache_hit = False
@@ -238,6 +241,8 @@ def _stream_answer(prompt: str) -> dict:
         buffer = buffer or "_(backend unavailable)_"
 
     answer_ph.markdown(styles.render_answer(buffer), unsafe_allow_html=True)
+    if meta.get("low_confidence"):
+        lowconf_ph.markdown(styles.low_confidence_note_html(), unsafe_allow_html=True)
     _render_sources(contexts)
     return {
         "role": "assistant",

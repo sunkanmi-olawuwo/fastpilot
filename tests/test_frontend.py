@@ -87,6 +87,29 @@ def test_rewrite_caption_shows_standalone_query(monkeypatch):
     assert any("searched as" in str(m.value) and "integer" in str(m.value) for m in at.markdown)
 
 
+def _streamed_lowconf(prompt, session_id, use_cache):
+    """An off-corpus query: the best reranked chunk scored below the floor, so `done`
+    carries low_confidence (the rerank-confidence guard fired)."""
+    yield "session", {"session_id": "s"}
+    yield "cache_status", {"cache_hit": False}
+    yield "classification", {"category": "FACTUAL"}
+    yield "token", {"token": "Here is a possibly off-topic answer."}
+    yield "done", {"msg_id": "m", "query_type": "FACTUAL", "low_confidence": True, "top_retrieval_score": 0.18}
+
+
+def test_low_confidence_caution_renders(monkeypatch):
+    """A low-confidence answer shows the 'may be outside the FastAPI docs' caution."""
+    import api_client
+
+    monkeypatch.setattr(api_client, "stream_query", _streamed_lowconf)
+    monkeypatch.setattr(api_client, "send_feedback", lambda *a, **k: True)
+    at = AppTest.from_file(_APP, default_timeout=30)
+    at.run()
+    at.chat_input[0].set_value("what is the airspeed velocity of a swallow?").run()
+    assert at.session_state["messages"][1]["metadata"]["low_confidence"] is True
+    assert any("Low retrieval confidence" in str(m.value) for m in at.markdown)
+
+
 def test_toggles_in_session_state(at):
     at.run()
     assert at.session_state["use_cache"] is True

@@ -249,3 +249,18 @@ async def test_metrics_get_stats_failure_hits_global_handler():
     reset_services()
     assert resp.status_code == 500
     assert resp.json()["error"] == "Internal server error"
+
+
+def test_confidence_meta_flags_weak_retrieval():
+    """Rerank-confidence guard: best chunk below the 0.3 floor -> low_confidence (no LLM call)."""
+    from app.main import _confidence_meta
+
+    hi = _confidence_meta([{"score": 0.82}, {"score": 0.4}])
+    assert hi["low_confidence"] is False
+    assert hi["top_retrieval_score"] == 0.82
+
+    lo = _confidence_meta([{"score": 0.18}, {"score": 0.05}])
+    assert lo["low_confidence"] is True
+    assert lo["top_retrieval_score"] == 0.18
+
+    assert _confidence_meta([])["low_confidence"] is True  # nothing retrieved at all

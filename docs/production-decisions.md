@@ -80,6 +80,27 @@ LLM routing hop — unacceptable for an interactive learning tool, and the Week-
 wins *answer quality* (T3's edge is exact-file retrieval, which the LLM judges can't even see). Production
 runs **T1b**. See [`retrieval-strategy.md`](retrieval-strategy.md).
 
+### Retrieval-confidence guard — **added** (the right-sized slice of CRAG)
+**Why:** the one real retrieval failure mode left is *off-corpus* queries — ask something the FastAPI corpus
+doesn't cover and retrieval returns weak chunks, risking a plausible-but-ungrounded answer. **How:** the
+reranker already scores every chunk 0–1, so the guard is **deterministic and latency-free** — no extra LLM
+call. If the best reranked chunk falls below `retrieval_confidence_min` (0.3; in-domain top scores run
+~0.5–0.85), the response carries `low_confidence=true` and the UI shows a caution ("may be outside the FastAPI
+docs — double-check"). **Evidence:** `_confidence_meta` unit-tested (low scores flag, in-domain don't); the
+frontend caution is hermetically tested.
+
+### CRAG corrective retrieval — **considered, declined**
+**What it is:** grade retrieved docs with an evaluator and, on poor retrieval, take corrective action
+(re-retrieval, query refinement, or **web search**). **Why declined here:** (1) retrieval isn't the weak link —
+production `answer_coverage` is **0.941** and faithfulness **0.992**, so there's little bad retrieval to
+rescue; (2) the corpus is **closed and curated** (514 FastAPI docs) — CRAG's signature web-search fallback
+would **break the value prop** (grounded in the official docs, every claim `[n]`-cited) by injecting
+un-citable web content; (3) it adds a **per-query LLM grader call** to a latency-sensitive path we already
+trimmed (see T3). The genuinely useful slice — *knowing when retrieval is weak* — is captured by the
+deterministic **retrieval-confidence guard** above, at zero latency and with no grounding risk. Full CRAG
+(or a query-shape T1b/T3 router for the exact-file gap) is noted as future work in
+[`retrieval-strategy.md`](retrieval-strategy.md).
+
 ## Observability — Opik (D8)
 
 **Added.** A thin shim (`app/observability.py`) makes Opik fully optional: every helper

@@ -110,6 +110,14 @@ def _format_contexts(contexts) -> list[dict[str, Any]]:
     return out
 
 
+def _confidence_meta(contexts: list[dict[str, Any]]) -> dict[str, Any]:
+    """Rerank-confidence guard — a latency-free slice of CRAG's "know when retrieval is weak"
+    (no extra LLM call). Flags ``low_confidence`` when the best reranked chunk scores below the
+    configured floor, so the UI can warn the answer may be outside the FastAPI corpus."""
+    top = max((c.get("score", 0.0) for c in contexts), default=0.0)
+    return {"top_retrieval_score": round(top, 4), "low_confidence": top < get_settings().retrieval_confidence_min}
+
+
 def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
@@ -296,6 +304,7 @@ async def _run_query(svc: _Services, app: FastAPI, query_text: str, session_id: 
         "is_follow_up": is_follow_up,
         "standalone_query": std_log,
         "trace_id": trace_id,
+        **_confidence_meta(contexts),
     }
     response = QueryResponse(
         answer=answer,
@@ -545,6 +554,7 @@ def create_app() -> FastAPI:
                         "session_id": session_id,
                         "num_contexts": len(contexts),
                         "trace_id": setup.get("trace_id"),
+                        **_confidence_meta(contexts),
                     },
                 )
                 logger.info(

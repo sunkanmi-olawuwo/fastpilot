@@ -81,6 +81,12 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', system-ui, sans-serif
 .fp-rewrite-note { font-size: 12px; color: var(--fp-muted); margin: -1px 0 7px; line-height: 1.45; }
 .fp-rewrite-note em { font-style: normal; color: var(--fp-text); }
 
+/* Low retrieval-confidence caution — best reranked chunk scored below the floor */
+.fp-lowconf {
+  font-size: 12.5px; color: var(--fp-danger-text); background: var(--fp-danger-soft);
+  border: 1px solid var(--fp-danger); border-radius: 8px; padding: 6px 11px; margin: 2px 0 8px; line-height: 1.45;
+}
+
 /* Inline citation markers */
 sup.fp-cite { color: var(--fp-accent-text); font-weight: 700; font-size: .72em; padding: 0 1px; }
 
@@ -238,6 +244,15 @@ def rewrite_note_html(standalone: str | None) -> str:
     if not standalone:
         return ""
     return f'<div class="fp-rewrite-note">↻ searched as: <em>{html.escape(standalone)}</em></div>'
+
+
+def low_confidence_note_html() -> str:
+    """Caution shown when the best reranked chunk scored below the confidence floor — the
+    retrieval-confidence guard's user-facing warning that the answer may be off-corpus."""
+    return (
+        '<div class="fp-lowconf">⚠ Low retrieval confidence — this may be outside the FastAPI '
+        "docs, so double-check the answer.</div>"
+    )
 
 
 def source_label(metadata: dict) -> str:
