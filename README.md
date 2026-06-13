@@ -5,8 +5,8 @@ docs + full-stack template + GitHub issues/discussions. Three modes form a learn
 loop: **Chat** (understand — cited answers) · **Agent** (watch — writes, runs, and
 self-corrects code in a sandbox) · **Playground** (practice — edit and run code yourself).
 
-> Build status: **Phase 0 — scaffolding.** The app, frontend, and agent land in
-> Phases 1–3. See `__plans/final-capstone-phased-plan.md` (repo root) for the roadmap.
+> **Final submission.** All three modes (Chat / Agent / Playground) are live and tested;
+> production RAG backend + Streamlit frontend, evaluated end-to-end through `POST /query`.
 
 ## Architecture
 
@@ -17,6 +17,19 @@ Streamlit frontend ──HTTP/SSE──> FastAPI backend ──> Qdrant Cloud (h
                                           ├──> Redis Cloud (conversation + semantic cache)
                                           └──> Opik (tracing, prompt versioning, feedback)
 ```
+
+## Key docs
+Start with [`submission.md`](submission.md) (the full write-up + self-assessment). Then:
+
+| Doc | Covers |
+|---|---|
+| [`docs/scoping.md`](docs/scoping.md) | the problem, the user, the corpus (Problem & Data) |
+| [`docs/chunking-strategy.md`](docs/chunking-strategy.md) · [`docs/retrieval-strategy.md`](docs/retrieval-strategy.md) | chunking + the T1b retrieval pipeline |
+| [`docs/production-decisions.md`](docs/production-decisions.md) | every production service as an add/skip decision + Opik + deploy |
+| [`docs/augmentation-decisions.md`](docs/augmentation-decisions.md) · [`docs/evaluation-strategy.md`](docs/evaluation-strategy.md) | the agent augmentation + the triangulated eval (bonus) |
+| [`docs/iteration-log.md`](docs/iteration-log.md) · [`evaluations/dogfood_log.md`](evaluations/dogfood_log.md) | build history (with real failure→fix stories) + real-usage log |
+
+Measured results live in [`evaluations/eval_results/`](evaluations/eval_results/).
 
 ## Prerequisites (accounts + keys)
 
@@ -69,7 +82,7 @@ docker compose --profile test up -d redis-test
 REDIS_HOST=localhost REDIS_PORT=6380 REDIS_SSL=false uv run pytest -m integration
 ```
 
-## Submission packaging (Phase 5)
+## Submission packaging
 
 ```bash
 uv run gitingest final-submission/ -o sunkanmi_olawuwo_final_submission.txt

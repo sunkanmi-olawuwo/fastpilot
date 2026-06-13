@@ -1,6 +1,6 @@
 # Production Decisions (Week 5)
 
-> **Status:** scaffold (Phase 0). Written in Phase 5. One entry per service: added/skipped, why, evidence.
+> One entry per production service: **added or skipped**, with rationale and evidence.
 
 Every production service below is an explicit **add** or **skip** with a reason and evidence — not
 a template default. Components live in `app/services/` and `app/augmentations/`.
@@ -18,7 +18,7 @@ disconnect cancels the producer task; once tokens have emitted we surface the er
 **Why:** repeated/paraphrased questions are common for a learning tool; a cache answers them instantly
 at ~$0. **How:** Redis HNSW/KNN over voyage-4-lite query embeddings (`FT.CREATE`/`FT.SEARCH`); a miss
 embeds the query **once** and reuses that vector for retrieval + cache-set (verified byte-identical,
-cosine 1.000000) — saving 2 Voyage calls per miss. **Calibration (AC4.2):** the paraphrase/near-miss
+cosine 1.000000) — saving the 2 redundant re-embeds per miss (retrieval + cache-set). **Calibration (AC4.2):** the paraphrase/near-miss
 distance bands *overlap* (a true paraphrase at 0.31 sits beyond the closest near-miss at 0.23), so the
 strict "100% paraphrase / 0 near-miss" target is unachievable with this embedder. We chose **safety**
 (zero wrong-answer serving) and set the threshold to **0.16** (4/6 paraphrases hit, 0/6 near-misses,
@@ -62,9 +62,9 @@ wall-timeout `killpg` → socket-guard prelude. Generated code self-verifies in-
 defense-in-depth, **not a hard boundary** — the common reflection escapes are closed and the blast
 radius is capped (no secrets in env, no network), but only OS isolation guarantees it; the documented
 production-grade path is a Docker backend (`--network none --memory 256m`), deferred only because
-Railway has no docker-in-docker. **Evidence:** safety suite (loop killed, network blocked, reflection
-escapes + `open` blocked pre-exec,
-denylist pre-exec, temp-dir isolation); full write-up in [`augmentation-decisions.md`](augmentation-decisions.md).
+Railway has no docker-in-docker. **Evidence:** safety suite (loop killed, network
+blocked, denylist + reflection escapes + `open` all rejected pre-exec, temp-dir isolation); full
+write-up in [`augmentation-decisions.md`](augmentation-decisions.md).
 
 ### Playground (D11) — **added, with a threat model**
 **Why:** turns the agent's sandbox into a user-facing "now *you* tweak it" surface — the strongest demo
@@ -75,7 +75,7 @@ contained to one view with a `st.text_area` fallback. **Evidence:** oversize / r
 disabled-404 guard tests.
 
 ### T3 two-stage LLM routing — **skipped** (honest cost/benefit)
-**Why skipped:** T3 was competitive on retrieval in Week-3 but added **~34 s** of latency from the extra
+**Why skipped:** T3 was competitive on retrieval in Week-3 but ran **~34 s/query** (vs T1b's ~11 s) from the extra
 LLM routing hop — unacceptable for an interactive learning tool, and the Week-4 eval showed T1b already
 wins *answer quality* (T3's edge is exact-file retrieval, which the LLM judges can't even see). Production
 runs **T1b**. See [`retrieval-strategy.md`](retrieval-strategy.md).
@@ -117,7 +117,7 @@ prompt version attached to a `rag-query-stream` generation (verified: the trace 
 the `asyncio.to_thread` hop where `build_prompt` runs, so the link lands on the right trace).
 
 ![Linked prompt on a live rag-query-stream trace (Prompts tab)](opik/06b-linked-prompt-trace.png)
-![Prompt library — registered prompts + version history (if the UI renders)](opik/06-prompt-library.png)
+![Prompt library — registered prompts + version history](opik/06-prompt-library.png)
 
 **3. Feedback linking** — thumbs up/down → `/feedback` → `log_feedback_score` attaches a
 `user_feedback` score to the answer's trace (joined by `trace_id`), closing the loop from a
@@ -149,8 +149,8 @@ the corpus in **Qdrant Cloud** — both reached over TLS, both the same instance
 stateful runs in a Railway container.
 
 **Secrets** are set in the Railway dashboard, never in the repo: backend gets `QDRANT_URL/API_KEY`,
-`GOOGLE_API_KEY`, `VOYAGE_API_KEY`, `REDIS_*` (TLS), `OPIK_*`; frontend gets `API_BASE_URL=
-http://backend.railway.internal:<PORT>`. `.env` and `.streamlit/secrets.toml` are git- and
+`GOOGLE_API_KEY`, `VOYAGE_API_KEY`, `REDIS_*` (TLS), `OPIK_*`; frontend gets
+`API_BASE_URL=http://backend.railway.internal:<PORT>`. `.env` and `.streamlit/secrets.toml` are git- and
 gitingest-ignored.
 
 **Local dev & CI parity:** `docker compose up backend frontend` mirrors the two-service topology

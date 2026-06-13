@@ -1,15 +1,16 @@
 # Video Transcript
 
-> **Status:** scaffold (Phase 0). Written in Phase 5 after recording.
+> **Pending the recording.** The < 3-minute demo runs against the deployed public URL; this
+> transcript is filled in once the video is recorded. Section outline is fixed below.
 
 ## Product Name
-_TODO (Phase 5)_
+_(written after recording)_
 
 ## Problem Setup
-_TODO (Phase 5)_
+_(written after recording)_
 
 ## System Design
-_TODO (Phase 5)_
+_(written after recording)_
 
 ## Live Demo
-_TODO (Phase 5): Q1 chat + citations · Q2 follow-up/cache · Q3 agent run · Q3b playground beat._
+_(written after recording): Q1 chat + citations · Q2 follow-up / cache hit · Q3 agent run (write → run → self-correct) · Q3b Playground beat (tweak the agent's code, re-run)._

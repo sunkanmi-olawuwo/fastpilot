@@ -39,9 +39,9 @@ A **grounded code-runner agent** (no class equivalent), plus a user-facing **Pla
 | Metric | Result |
 |---|---|
 | Success **with** self-correction | **10/10 (100%)** — clears AC3.1 (≥8/10) and the 0.80 gate |
-| Success **first attempt only** | 40–50% (LLM-variable across runs) |
-| **Self-correction gain** | **+50 to +60 points** — *this delta is the augmentation's value* |
-| Self-correcting tasks | 5–6/10 fail attempt 1 and recover; `response_model` needed **two** fix rounds |
+| Success **first attempt only** | **5/10 (50%)** (committed `agent_eval.json`; LLM-variable — an earlier run scored 4/10) |
+| **Self-correction gain** | **+50 points** — *this delta is the augmentation's value* |
+| Self-correcting tasks | **5/10** fail attempt 1 and recover; `response_model` needed **two** fix rounds |
 
 The loop is doing real work, not cosmetics: roughly half of all tasks only pass *because* the
 agent reads its own traceback and fixes the code.

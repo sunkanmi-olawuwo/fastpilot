@@ -55,7 +55,7 @@ when it reads well — a holistic score can't catch that. The prompt evolved wit
 |---|---|---|---|---|
 | v1 holistic single-score | 0.983 | — | 0.917 | inflated — 11/12 questions pinned at 1.0; one number hides which claim is ungrounded |
 | v2 decomposed + verbatim-quote rule | 0.909 | −0.075 | 0.901 | inflation caught (faithfulness now varies 0.765–1.0), but the verbatim rule false-flagged faithful paraphrases of code (Q1 read 0.914 vs true 1.0) and shredded long answers (Q6 → 68 claims) |
-| **v3 calibrated (final)** | **0.964** | **+0.055** | **0.917** | paraphrase tolerance + granularity guidance (15–30 claims, code blocks kept whole) + retrieval layer added; real gaps kept, false flags fixed |
+| **v3 calibrated (final)** | **0.952** | **+0.043** | **0.893** | paraphrase tolerance + granularity guidance (15–30 claims, code blocks kept whole) + retrieval layer added; real gaps kept, false flags fixed |
 
 The **why** behind each version is the evidence of judge design, not the final
 number: v1's holistic score inflated and hid ungrounded claims; v2's
@@ -65,10 +65,12 @@ verbatim-quote requirement over-penalised faithful code paraphrases (Q1 claims
 tolerance — a faithful semantic paraphrase counts as supported with the closest
 quote cited, (2) granularity guidance — 15–30 atomic claims, code blocks one
 claim, meta-statements excluded, and (3) the retrieval layer. The fixes are
-provable: Q1 faithfulness went **0.914 → 1.000** and Q6 claim count **68 → 23**
-(settling at 0.87 — *still* below 1.0, because Q6 has genuinely unsupported
-claims v3 keeps flagged). v3's 0.964 sits deliberately **between** v1's inflated
-0.983 and v2's over-strict 0.909 — calibrated, not regressed.
+provable: Q1 faithfulness went **0.914 → 1.000** and Q6 claim count **68 → 28**
+(settling at 0.857 — *still* below 1.0, because Q6 has genuinely unsupported
+claims v3 keeps flagged). v3's 0.952 sits deliberately **between** v1's inflated
+0.983 and v2's over-strict 0.909 — calibrated, not regressed. (These are the
+committed `decomposed_judge_t1b_hybrid_voyage.json` figures, the same v3 run that
+feeds the triangulation and the production-parity baseline below.)
 
 **Method 2 — Deterministic semantic metrics (Voyage `rerank-2.5`).** A
 judge-independent anchor with no LLM in the loop, using the *same* reranker as
@@ -133,7 +135,7 @@ faithfulness **1.0** (n=12, judge `gemini-2.5-flash`, gate 0.9). Evidence:
 correct) was probed on 10 FastAPI concept tasks. Success rises from **0.5
 first-attempt-only to 1.0 with self-correction** — a **+0.50** gain (a 50-point
 jump; 5 of 10 tasks needed a second attempt and all 5 then passed). Agent answer
-quality is corroborated separately: citation relevance **0.926** (25/27 cited
+quality is corroborated separately: citation relevance **93%** (25/27 cited
 chunks relevant, all 6 tasks cite), and 3/3 broken snippets fixed clean
 (non-zero → zero exit). Evidence: `agent_eval.json`, `agent_quality.json`.
 

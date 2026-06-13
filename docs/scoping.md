@@ -18,8 +18,9 @@ from "I read it" to "I ran it and it works."
 
 ## QUALIFY — the user, and the evidence they're real
 The user is a developer learning FastAPI by building — and **the builder is learner #1**. This isn't a
-hypothetical persona: the project is **dogfooded**. Every real interaction is logged
-(`dogfood/sessions.jsonl`, harvested into `evaluations/dogfood_log.md`), and that log is genuine
+hypothetical persona: the project is **dogfooded**. Every real interaction is auto-logged (to a
+gitingest-invisible JSONL at the repo root) and harvested into
+[`../evaluations/dogfood_log.md`](../evaluations/dogfood_log.md), which is genuine
 usage evidence — it shows conditional rewrite resolving real follow-ups ("can it be an integer?" →
 "Can a query parameter with a default value be an integer?") and the semantic cache serving repeats,
 in real traffic rather than in tests. The need is concrete because the builder hit it firsthand.

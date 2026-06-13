@@ -16,7 +16,7 @@ instructive real-usage exchanges (the rest are Phase-4 parity-eval golden traffi
 | 06-11 | How do I use Pydantic models for request bodies? | chat | 5 | 4.5k chars; repeat hit the cache. |
 | 06-11 | How do I declare a query parameter with a default value? | chat | 5 | Repeat hit the cache. |
 | 06-11 | How do I return a custom status code? | chat | 5 | 5k chars, thorough. |
-| 06-12 | (12 golden questions, Phase-4 parity eval) | chat | — | Scored live: see `eval_results/production_parity.json`. |
+| 06-12 | (12 golden questions, parity eval) | chat | n/a (scored live) | See `eval_results/production_parity.json` — faithfulness 0.992 / coverage 0.941. |
 
 **Feedback:** 2 thumbs-up recorded (`msg_c9dc9c9f…`, `msg_053c4a8c…`), 0 thumbs-down.
 
@@ -30,7 +30,7 @@ instructive real-usage exchanges (the rest are Phase-4 parity-eval golden traffi
   (1.7k–5k chars) and cited; the golden-question traffic scored at/above the gate
   (`production_parity.json`). So there were no 3–5 clearly-weak answers to *promote* to new
   eval questions this round.
-- **Honest gap:** these sessions are predominantly dev + eval traffic, not sustained human
-  dogfooding. Deeper interactive use against the **deployed URL** (flagging genuinely weak
-  answers in the wild) is a Phase-5 activity; the logging + harvest path is proven and ready
-  to capture it.
+- **Honest limitation:** these sessions are predominantly dev + eval traffic, not sustained human
+  dogfooding by multiple users. Deeper interactive use against the **deployed URL** (flagging
+  genuinely weak answers in the wild) would be the natural next step; the logging + harvest path
+  is proven and ready to capture it.
