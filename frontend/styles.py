@@ -77,6 +77,10 @@ html, body, [class*="css"] { font-family: 'Source Sans 3', system-ui, sans-serif
 .fp-badge--rewrite { background: var(--fp-surface-2); }
 .fp-badge--guarded { background: transparent; color: var(--fp-accent-text); border-color: var(--fp-accent); }
 
+/* Conditional-rewrite caption — shows the standalone query a follow-up was rewritten to */
+.fp-rewrite-note { font-size: 12px; color: var(--fp-muted); margin: -1px 0 7px; line-height: 1.45; }
+.fp-rewrite-note em { font-style: normal; color: var(--fp-text); }
+
 /* Inline citation markers */
 sup.fp-cite { color: var(--fp-accent-text); font-weight: 700; font-size: .72em; padding: 0 1px; }
 
@@ -226,6 +230,14 @@ def badges_html(
     if not parts:
         return ""
     return '<div class="fp-badges">' + "".join(parts) + "</div>"
+
+
+def rewrite_note_html(standalone: str | None) -> str:
+    """Caption revealing the standalone query a follow-up was rewritten to (empty if none),
+    e.g. ↻ searched as: *Can a query parameter with a default value be an integer?*"""
+    if not standalone:
+        return ""
+    return f'<div class="fp-rewrite-note">↻ searched as: <em>{html.escape(standalone)}</em></div>'
 
 
 def source_label(metadata: dict) -> str:

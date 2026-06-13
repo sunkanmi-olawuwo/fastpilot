@@ -166,6 +166,9 @@ def _render_assistant(msg: dict, idx: int) -> None:
     )
     if badges:
         st.markdown(badges, unsafe_allow_html=True)
+    note = styles.rewrite_note_html(meta.get("standalone_query"))
+    if note:
+        st.markdown(note, unsafe_allow_html=True)
     st.markdown(styles.render_answer(msg["content"]), unsafe_allow_html=True)
     _render_sources(msg.get("contexts", []))
     cap = []
@@ -193,6 +196,7 @@ def _render_history() -> None:
 def _stream_answer(prompt: str) -> dict:
     """Stream the assistant answer into placeholders; return the message dict."""
     badge_ph = st.empty()
+    note_ph = st.empty()
     answer_ph = st.empty()
     buffer, contexts, meta = "", [], {}
     rewritten = cache_hit = False
@@ -208,6 +212,7 @@ def _stream_answer(prompt: str) -> dict:
                 st.session_state.session_id = data.get("session_id", st.session_state.session_id)
             elif event == "rewrite":
                 rewritten = True
+                note_ph.markdown(styles.rewrite_note_html(data.get("standalone")), unsafe_allow_html=True)
             elif event == "cache_status":
                 cache_hit = bool(data.get("cache_hit"))
             elif event == "classification":
@@ -255,7 +260,7 @@ def _fake_stream_from_post(prompt: str):
     meta = body.get("metadata", {})
     yield "session", {"session_id": body.get("session_id", st.session_state.session_id)}
     if meta.get("is_follow_up"):
-        yield "rewrite", {}
+        yield "rewrite", {"standalone": meta.get("standalone_query")}
     yield "cache_status", {"cache_hit": meta.get("cache_hit", False)}
     if meta.get("query_type"):
         yield "classification", {"category": meta["query_type"]}

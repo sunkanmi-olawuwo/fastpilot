@@ -61,6 +61,32 @@ def test_sending_query_appends_user_and_assistant(at):
     assert at.session_state["messages"][1]["metadata"]["query_type"] == "HOW_TO"
 
 
+def _streamed_followup(prompt, session_id, use_cache):
+    """A follow-up turn: the backend rewrote the query, so a `rewrite` event carries the
+    standalone and `done` echoes it in metadata."""
+    standalone = "Can a query parameter with a default value be an integer?"
+    yield "session", {"session_id": "sess_test"}
+    yield "rewrite", {"original": prompt, "standalone": standalone}
+    yield "cache_status", {"cache_hit": False}
+    yield "classification", {"category": "FACTUAL"}
+    yield "token", {"token": "Yes — annotate the parameter as `int` [1]."}
+    yield "done", {"msg_id": "m", "latency_ms": 900.0, "query_type": "FACTUAL", "standalone_query": standalone}
+
+
+def test_rewrite_caption_shows_standalone_query(monkeypatch):
+    """A follow-up shows the '↻ searched as: <standalone>' caption (the rewrite text)."""
+    import api_client
+
+    monkeypatch.setattr(api_client, "stream_query", _streamed_followup)
+    monkeypatch.setattr(api_client, "send_feedback", lambda *a, **k: True)
+    at = AppTest.from_file(_APP, default_timeout=30)
+    at.run()
+    at.chat_input[0].set_value("can it be an integer?").run()
+    msg = at.session_state["messages"][1]
+    assert msg["metadata"]["standalone_query"] == "Can a query parameter with a default value be an integer?"
+    assert any("searched as" in str(m.value) and "integer" in str(m.value) for m in at.markdown)
+
+
 def test_toggles_in_session_state(at):
     at.run()
     assert at.session_state["use_cache"] is True
