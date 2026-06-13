@@ -64,10 +64,15 @@ self-verification could never catch. That is exactly why the human step exists.
 
 ## Honest limits
 - **Single-file apps only** — no database, no external network, no multi-module projects.
-- **Sandbox is single-box** — full filesystem *reads* are still possible; the documented
-  production-grade path is a Docker backend (`--network none --memory 256m`). Layered defenses
-  (AST scan, rlimits, socket guard, scrubbed env, kill switch) make it safe for a course demo
-  and a capped public Playground, not multi-tenant hostile code.
+- **Sandbox is single-box, defense-in-depth — not a hard boundary.** The AST scan blocks the
+  textbook reflection escape (`().__class__.__bases__[0].__subclasses__()`), the reflection builtins
+  (`getattr`/`globals`/`vars`/…) it would lean on, and direct `open` filesystem access — so the
+  copy-paste escapes a curious user would actually try are closed. But a *pure in-process Python*
+  sandbox can never be a true guarantee (a sufficiently obscure technique may exist); only OS-level
+  isolation is. The remaining layers cap the blast radius (scrubbed env = **no secrets to steal**,
+  socket guard = no network, rlimits + wall-timeout, `PLAYGROUND_ENABLED` kill switch). The documented
+  production-grade path is a **Docker backend** (`--network none --memory 256m`) — the only hard
+  boundary, deferred because Railway offers no docker-in-docker.
 - **Self-verification only tests what the agent thought to test** — see the `depends` finding;
   robust endpoints often lean on the framework's contracts rather than the agent's thoroughness.
 - **No keystroke autocomplete** in the Playground — Streamlit's rerun model + the Monaco iframe

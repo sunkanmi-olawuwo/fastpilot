@@ -1,7 +1,9 @@
 """Sandboxed code executor (D6) — the one net-new piece with no class equivalent.
 
 Runs agent-generated / user FastAPI code with layered defenses:
-  1. AST pre-scan denylist  — reject obvious escapes before anything runs.
+  1. AST pre-scan denylist  — reject denied imports/calls/builtins AND the reflection escape
+                              (dunder-attribute access like ``().__class__.__subclasses__()`` and
+                              ``getattr``/``globals``/``open``) before anything runs.
   2. Subprocess isolation   — fresh temp dir as cwd, ``python -I`` (isolated), scrubbed
                               env (no API keys), own process group.
   3. resource limits        — RLIMIT_CPU / RLIMIT_AS / RLIMIT_FSIZE via preexec_fn.
@@ -10,9 +12,12 @@ Runs agent-generated / user FastAPI code with layered defenses:
                               urllib/requests/httpx all fail at connect (TestClient is
                               in-process ASGI, so it's unaffected).
 
-Residual risk is honest: this is a course demo on a single box, not a multi-tenant
-sandbox — full FS reads are still possible. A Docker backend (``--network none
---memory 256m``) is the documented production-grade alternative.
+Residual risk is honest: a *pure in-process Python* sandbox is defense-in-depth, not a hard
+boundary. The common reflection escapes are closed and the blast radius is capped (scrubbed
+env = no secrets, socket guard = no network), but read-only FS access via other stdlib paths
+(e.g. ``pathlib``) remains, and a sufficiently obscure technique may exist. Only OS isolation
+guarantees it — a Docker backend (``--network none --memory 256m``) is the documented
+production-grade path, deferred only because Railway offers no docker-in-docker.
 
 The generated code self-verifies in-process with ``fastapi.testclient.TestClient`` (D7),
 so "running" never binds a port and stdout is a clean request/response log.
@@ -61,7 +66,13 @@ _DENIED_CALL_PATHS = {
     "shutil.move",
     "importlib.import_module",
 }
-_DENIED_BUILTINS = {"eval", "exec", "__import__", "compile"}
+# eval/exec/compile/__import__ run arbitrary code; getattr/setattr/vars/globals/locals are the
+# reflection primitives that reach denied objects by *string*, sidestepping the name-based scan;
+# open is direct filesystem access. None have a legitimate use in a self-contained FastAPI example.
+_DENIED_BUILTINS = {
+    "eval", "exec", "compile", "__import__",
+    "getattr", "setattr", "delattr", "vars", "globals", "locals", "breakpoint", "open",
+}
 
 _NET_PRELUDE = (
     "import socket as _fp_sock\n"
@@ -104,6 +115,12 @@ def scan_code(code: str) -> tuple[bool, str | None]:
                 return False, f"call to '{name}' is not allowed in the sandbox"
             if isinstance(node.func, ast.Name) and node.func.id in _DENIED_BUILTINS:
                 return False, f"use of '{node.func.id}' is not allowed in the sandbox"
+        elif isinstance(node, ast.Attribute):
+            # Dunder attribute access is the reflection escape: `().__class__.__bases__[0]
+            # .__subclasses__()` walks the object graph to Popen/etc. without naming it. No
+            # self-contained FastAPI example needs `__class__`/`__globals__`/`__mro__`/… .
+            if node.attr.startswith("__") and node.attr.endswith("__"):
+                return False, f"access to '{node.attr}' (reflection) is not allowed in the sandbox"
     return True, None
 
 

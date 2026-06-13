@@ -54,11 +54,16 @@ never a 5xx.
 
 ### Sandboxed code executor (D6) — **added** (the augmentation, Week 6)
 **Why:** the gap was that `CODE_GENERATION` answers were *unverified* — users still had to run the code.
-**How:** AST denylist → `python -I` subprocess isolation (scrubbed env, temp-dir cwd, own process group)
-→ `RLIMIT` CPU/AS/FSIZE → wall-timeout `killpg` → socket-guard prelude. Generated code self-verifies
-in-process with `TestClient` (D7) so "running" never binds a port. **Honest limit:** single-box —
-full filesystem *reads* are still possible; the documented production-grade path is a Docker backend
-(`--network none --memory 256m`). **Evidence:** 11-case safety suite (loop killed, network blocked,
+**How:** AST denylist (denied imports/calls/builtins **plus** dunder-attribute and reflection-builtin
+blocking, so `().__class__…__subclasses__()`, `getattr`, and `open` are rejected at scan) → `python -I`
+subprocess isolation (scrubbed env, temp-dir cwd, own process group) → `RLIMIT` CPU/AS/FSIZE →
+wall-timeout `killpg` → socket-guard prelude. Generated code self-verifies in-process with `TestClient`
+(D7) so "running" never binds a port. **Honest limit:** a pure in-process Python sandbox is
+defense-in-depth, **not a hard boundary** — the common reflection escapes are closed and the blast
+radius is capped (no secrets in env, no network), but only OS isolation guarantees it; the documented
+production-grade path is a Docker backend (`--network none --memory 256m`), deferred only because
+Railway has no docker-in-docker. **Evidence:** safety suite (loop killed, network blocked, reflection
+escapes + `open` blocked pre-exec,
 denylist pre-exec, temp-dir isolation); full write-up in [`augmentation-decisions.md`](augmentation-decisions.md).
 
 ### Playground (D11) — **added, with a threat model**

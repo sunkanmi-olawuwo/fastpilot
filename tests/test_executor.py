@@ -67,6 +67,11 @@ def test_network_blocked_at_runtime():
         ("import subprocess\nsubprocess.run(['ls'])\n", "subprocess"),
         ("import os\nos.system('echo hi')\n", "os.system"),
         ("eval('1+1')\n", "eval"),
+        # Reflection escapes: reach denied objects without naming them. All blocked at scan.
+        ("print(().__class__.__bases__[0].__subclasses__())\n", "__subclasses__"),
+        ("getattr((), '__cl' + 'ass__')\n", "getattr"),
+        ("print(globals())\n", "globals"),
+        ("print(open('/etc/passwd').read())\n", "open"),
     ],
 )
 def test_denylist_rejects_before_execution(code, needle):

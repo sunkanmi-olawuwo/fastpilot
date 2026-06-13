@@ -84,14 +84,14 @@ Calibrated 1–5 — deliberately **not** straight-5; weaknesses named below.
 | Rubric criterion | Weight | Self-score | Honest justification |
 |------------------|:------:|:----------:|----------------------|
 | Problem & Data | 15% | **4.5** | Specific, dogfooded problem; corpus mapped source-by-source to learning needs. Docked 0.5: the live "user base" is essentially the builder (n=1) — real evidence, but small. |
-| System Design | 25% | **4.0** | T1b is evidence-backed, every service has an explicit add/skip decision, the augmentation is designed + measured. Docked: the sandbox is **single-box** (filesystem reads still possible; Docker `--network none` is the documented production path), and the soak is single-session sequential, not a multi-user load test. |
+| System Design | 25% | **4.0** | T1b is evidence-backed, every service has an explicit add/skip decision, the augmentation is designed + measured. Docked: the sandbox is a **defense-in-depth in-process** sandbox (reflection escapes + `open` blocked, env scrubbed, network off — but not a hard boundary; Docker `--network none` is the documented production path), and the soak is single-session sequential, not a multi-user load test. |
 | Results & Honesty | 25% | **5.0** | Eval re-run *through the production endpoint*, agent measured ON vs OFF, and several genuinely honest findings reported rather than buried (cache band overlap, negative-skip gap, faithfulness delta explained). The strongest area. |
 | Documentation Quality | 15% | **4.5** | Full doc set + an iteration log with real failure→fix stories. Docked 0.5: some Week-1/2/3 figures are ported from the weekly docs rather than re-derived here. |
 | Optional Depth (W4/W6) | 10% | **5.0** | **Both** bonus boxes delivered and *measured*: `evaluation-strategy.md` (triangulated judges) + `augmentation-decisions.md` (the code-runner, with gap → augmentation → measurement → limits). |
 | Video & Transcript | 10% | _pending_ | Recorded against the deployed URL. |
 
 ### Honest limitations (named, not hidden)
-- **Sandbox is single-box** — full filesystem *reads* possible; safe for a course demo + capped public Playground, not multi-tenant hostile code.
+- **Sandbox is defense-in-depth, not a hard boundary** — the textbook reflection escape, `getattr`/`globals`, and `open` are blocked at the AST scan, the env is scrubbed (no secrets) and the network is off; but a *pure in-process Python* sandbox can't be a true guarantee (read-only `pathlib` access remains) — Docker `--network none` is the production path, deferred because Railway has no docker-in-docker.
 - **Cache is conservative by design** — threshold 0.16 favours zero wrong answers over hit-rate (AC4.2 bands overlap).
 - **Agent self-verification only tests what it thought to test** — see the `depends` negative-skip finding.
 - **No keystroke autocomplete** in the Playground — Streamlit rerun + iframe latency; documented next step.
