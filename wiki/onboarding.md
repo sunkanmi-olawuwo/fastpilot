@@ -2,7 +2,7 @@
 
 > An article for two readers: a **new engineer** picking up FastPilot, and **future-you**
 > coming back after months away. It explains what this project *is*, the mental model behind
-> it, and how to become productive fast. For the reference detail, follow the [[links]].
+> it, and how to become productive fast. For the reference detail, follow the cross-links.
 
 ## In one paragraph
 
