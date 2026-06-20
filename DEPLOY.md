@@ -18,6 +18,21 @@ GitHub Actions workflow** — and there shouldn't be:
 
 So the deploy trigger is: **push to the branch Railway watches → Railway rebuilds the changed service.**
 
+## Deploy gating (chosen policy)
+
+**Straight from `main`, gated on CI.** No deploy branch, no PR-approval step (solo project) — but
+a broken build must never reach production:
+
+- In each Railway service → **Settings → enable "Wait for CI"** (check status before deploying).
+  Railway then holds the deploy until the GitHub `ci.yml` checks pass on that commit. Push to `main`
+  → CI runs ruff + tests → green → Railway deploys; red → no deploy.
+- This reuses the existing CI as the gate, so there is **no GitHub Actions deploy workflow** to
+  maintain (a `railway`-CLI deploy job would only duplicate the native integration).
+- **During a demo/recording window:** flip the service to **manual deploy** (or just don't push) so
+  the live app is a frozen, known-good build while you record.
+- *(If this repo ever becomes collaborative and you want a hard approval gate, point Railway at a
+  `production` branch and promote `main → production` via PR — not needed today.)*
+
 ## One-time setup (Railway dashboard)
 
 1. **New Project → Deploy from GitHub repo** → pick this repo.
