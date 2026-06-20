@@ -14,7 +14,7 @@ A production **RAG** system that closes the loop from reading to running:
 ![Coverage gate](https://img.shields.io/badge/coverage-≥90%25-brightgreen)
 
 <!-- ▶ LIVE DEMO: paste the public Railway URL here once deployed (see DEPLOY.md) -->
-**[▶ Live demo](#)** · **[2-min walkthrough](#)** · **[Full write-up](submission.md)**
+**[▶ Live demo](#)** · **[2-min walkthrough](#)** · **[Docs & architecture](https://github.com/sunkanmi-olawuwo/fastpilot/wiki)**
 
 <img src="docs/screenshots/01-welcome.png" alt="FastPilot welcome screen" width="780">
 
@@ -107,7 +107,7 @@ All measured **live through the production pipeline** (`POST /query`); evidence 
 **Honest findings** (named, not buried): the semantic cache is tuned for **zero wrong-answer serving
 over hit-rate**; a human-in-the-loop probe found a robustness gap the agent's self-tests missed
 (negative pagination); the Opik online-eval rule flagged a live answer at hallucination 0.85 — the
-guardrail does real work. Full self-assessment + limitations in [`submission.md`](submission.md).
+guardrail does real work. The full limitations list lives in [`wiki/feature-coverage.md`](wiki/feature-coverage.md).
 
 ---
 
@@ -169,7 +169,7 @@ REDIS_HOST=localhost REDIS_PORT=6380 REDIS_SSL=false uv run pytest -m integratio
 
 | Doc | Covers |
 |---|---|
-| [`submission.md`](submission.md) | full write-up + calibrated self-assessment (start here) |
+| [Developer wiki](https://github.com/sunkanmi-olawuwo/fastpilot/wiki) ([`wiki/`](wiki/)) | architecture, endpoints, conventions, testing, feature coverage (start here) |
 | [`docs/scoping.md`](docs/scoping.md) | the problem, the user, the corpus |
 | [`docs/chunking-strategy.md`](docs/chunking-strategy.md) · [`docs/retrieval-strategy.md`](docs/retrieval-strategy.md) | chunking + the T1b retrieval pipeline |
 | [`docs/production-decisions.md`](docs/production-decisions.md) | every production service as an add/skip decision |

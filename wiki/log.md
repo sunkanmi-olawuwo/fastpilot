@@ -5,6 +5,15 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-20 — Removed submission.md (course artifact)
+
+- Deleted `submission.md` (the capstone write-up: student name + rubric self-assessment) — it read
+  as coursework, not product. Its substantive content already lives elsewhere: results + honest
+  findings in `README.md`, the full limitations list in [[feature-coverage]].
+- Repointed the three README links (`Full write-up` → **Docs & architecture** wiki; self-assessment
+  line → `wiki/feature-coverage.md`; Documentation-table row → the Developer wiki) and dropped the
+  `submission.md` bullet from [[index]]. No dangling references remain.
+
 ## 2026-06-20 — Sidebar expanded by default + better screenshots
 
 - **Frontend:** `initial_sidebar_state` flipped `collapsed → expanded` (`frontend/app.py`) so the
