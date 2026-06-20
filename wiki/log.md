@@ -5,6 +5,15 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-20 — GitHub Wiki published + CI auto-publish
+
+- Published `wiki/` to the **GitHub Wiki** via `scripts/publish_wiki.py` (in-repo `wiki/`
+  stays canonical; the GitHub Wiki is a generated mirror with a `_Sidebar` and `index → Home`).
+- Added a **`publish-wiki` CI job** (`.github/workflows/ci.yml`): on push to `main`, after
+  tests pass, it re-runs the publish script so the wiki never drifts from `wiki/`. Uses
+  `contents: write` + `GITHUB_TOKEN`; idempotent (no-ops when unchanged). This very entry is
+  the first edit auto-published by that job.
+
 ## 2026-06-20 — Wiki established + repo packaged as standalone product
 
 **Context.** FastPilot was extracted from the capstone monorepo into its own standalone repo
