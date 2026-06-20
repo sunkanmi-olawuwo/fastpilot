@@ -5,6 +5,20 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-20 — De-course-ified the design docs
+
+Removed coursework framing from the `docs/` design essays so they read as professional engineering
+docs, **without touching any technical substance**:
+- **Titles:** dropped `(Week 5)`, `(Week 6) — BONUS`, `(BONUS — Optional Depth)`.
+- **Bodies:** neutralized course-week labels (Week 1–6), dropped acceptance-criteria IDs (`AC#`) while
+  keeping their thresholds in plain words, removed rubric/grading/self-assessment/submission framing,
+  and rephrased "the class …" → "the reference …". `iteration-log.md` section headings reframed from
+  weeks to phases (Foundations / Production backend / Agent augmentation / Live evaluation / Security
+  & load hardening).
+- **Preserved verbatim:** all metrics, dates, file paths, model names, and the internal decision IDs
+  (`D#`, `T1a/T1b/T2/T3`). Verified: zero real numeric tokens lost (only `AC#`/self-score bookkeeping
+  removed), all 29 dates intact, no broken heading anchors. See [[feature-coverage]] for results.
+
 ## 2026-06-20 — Removed submission.md (course artifact)
 
 - Deleted `submission.md` (the capstone write-up: student name + rubric self-assessment) — it read

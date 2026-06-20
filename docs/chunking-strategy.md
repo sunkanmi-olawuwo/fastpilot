@@ -25,7 +25,7 @@ The configuration that produced the production collection `rag_accelerator_capst
 
 ## Key decision
 
-**The BGE → Voyage-4-lite embedder migration is the headline.** Under the week-1 naive word-splitter, BGE-large (512-token window) silently truncated **27.9% of chunks (963 of 3,455)** — more than a quarter of the index lost content before it was ever embedded. (The naive splitter's 3,455 chunks and the hybrid chunker's 4,232 are different chunk universes, hence the different denominators here and below.) The corpus drives this: GitHub issues have a median of 1,688 words and p90 of 4,030 words (~10× BGE's 512-token limit), and 80.5% of documents exceed that limit if not chunked.
+**The BGE → Voyage-4-lite embedder migration is the headline.** Under the initial naive word-splitter, BGE-large (512-token window) silently truncated **27.9% of chunks (963 of 3,455)** — more than a quarter of the index lost content before it was ever embedded. (The naive splitter's 3,455 chunks and the hybrid chunker's 4,232 are different chunk universes, hence the different denominators here and below.) The corpus drives this: GitHub issues have a median of 1,688 words and p90 of 4,030 words (~10× BGE's 512-token limit), and 80.5% of documents exceed that limit if not chunked.
 
 Switching the new strategy to **Voyage-4-lite eliminates truncation entirely** — its 32K-token window is >60× BGE's, dropping truncation to **0** across all 4,232 hybrid chunks (a BGE re-run on the hybrid chunks would still have truncated 9.3%, so the embedder swap, not just the chunker, is what closes the gap).
 

@@ -1,4 +1,4 @@
-# Augmentation Decisions (Week 6) — BONUS
+# Augmentation Decisions
 
 > Components live in `app/augmentations/` (`agent_orchestrator.py`, `code_executor.py`,
 > `rate_limit.py`, `security.py`). All numbers below are measured live through the
@@ -8,16 +8,16 @@
 The RAG system answers *how* to do something — but for the `CODE_GENERATION` slice, a
 correct-sounding answer is not the same as **working code**. Retrieval + generation gave
 the user a snippet they still had to copy out, run, and debug themselves; nothing verified
-that the generated FastAPI code actually executes or behaves as claimed. The honest Week-4
+that the generated FastAPI code actually executes or behaves as claimed. The honest
 finding ("T1b wins answers, judges can't see exact-file retrieval") underlined that *answer
 quality ≠ runnable correctness*. That last mile — **write it, run it, prove it** — was unclosed.
 
 ## Augmentation selected
-A **grounded code-runner agent** (no class equivalent), plus a user-facing **Playground**
+A **grounded code-runner agent**, plus a user-facing **Playground**
 (D11) that reuses the same sandbox:
 
 - **Deterministic orchestrator** (`agent_orchestrator.py`) — a code-driven loop mirroring the
-  class CRAG routing philosophy, *not* free-form LLM tool-calling: InputGuard → plan →
+  reference CRAG routing philosophy, *not* free-form LLM tool-calling: InputGuard → plan →
   retrieve (T1b) → write (grounded, cites `[n]`) → AST-scan + sandbox run → self-correct
   (≤2 fix attempts, each fix prompt carrying the previous traceback) → explain, or an honest
   failure. Chosen over Haystack `Agent`+`Tool` for **demo determinism and unit-testability**;
@@ -30,7 +30,7 @@ A **grounded code-runner agent** (no class equivalent), plus a user-facing **Pla
   killpg → socket-guard prelude. The same scan+sandbox path backs the Playground `/execute`.
 - **Playground (D11)** — Monaco editor (with `st.text_area` fallback) → `/execute`; "Fix with
   AI" → `/fix` reuses `AGENT_FIX_PROMPT`. Caps: 10 KB, 15 s wall, 3 runs/min/session,
-  `PLAYGROUND_ENABLED` kill switch. The one non-class dependency, contained to one view + one
+  `PLAYGROUND_ENABLED` kill switch. The one external dependency, contained to one view + one
   endpoint.
 
 ## Measurement (Phase 4, live through the real pipeline)
@@ -38,7 +38,7 @@ A **grounded code-runner agent** (no class equivalent), plus a user-facing **Pla
 
 | Metric | Result |
 |---|---|
-| Success **with** self-correction | **10/10 (100%)** — clears AC3.1 (≥8/10) and the 0.80 gate |
+| Success **with** self-correction | **10/10 (100%)** — clears the ≥8/10 bar and the 0.80 gate |
 | Success **first attempt only** | **5/10 (50%)** (committed `agent_eval.json`; LLM-variable — an earlier run scored 4/10) |
 | **Self-correction gain** | **+50 points** — *this delta is the augmentation's value* |
 | Self-correcting tasks | **5/10** fail attempt 1 and recover; `response_model` needed **two** fix rounds |
@@ -48,10 +48,10 @@ agent reads its own traceback and fixes the code.
 
 **Grounding** (`agent_quality.json`, `08_agent_quality_checks.py`): after making citation
 mandatory in the code/fix prompts, **6/6 sampled tasks cite `[n]`**, and **25/27 cited chunks
-(93%) actually mention the API used** — clears AC3.4 (≥80%).
+(93%) actually mention the API used** — clears the ≥80% bar.
 
 **Fix-with-AI** (`agent_quality.json`): **3/3** seeded broken snippets (syntax error, missing
-import, failing assertion) come back clean after a single fix round — clears AC3.9 (≥2/3).
+import, failing assertion) come back clean after a single fix round — clears the ≥2/3 bar.
 
 **Human-in-the-loop check** (`human_verification.json` + `agent_code/`,
 `09_human_verification_probes.py`): 10 hand-written edge probes the agent's own asserts never

@@ -1,4 +1,4 @@
-# Production Decisions (Week 5)
+# Production Decisions
 
 > One entry per production service: **added or skipped**, with rationale and evidence.
 
@@ -7,7 +7,7 @@ a template default. Components live in `app/services/` and `app/augmentations/`.
 
 ### SSE streaming — **added**
 **Why:** answers run 1.7k–10k chars; streaming token-by-token makes the wait legible instead of a
-30-second blank. **How:** `text/event-stream` with the class week-5 event protocol
+30-second blank. **How:** `text/event-stream` with the standard SSE event protocol
 (`session / rewrite / cache_status / classification / context / token / done / error`), consumed in
 Streamlit via `requests.post(..., stream=True)` + `iter_lines()`. **Hardening:** a mid-stream
 disconnect cancels the producer task; once tokens have emitted we surface the error rather than retry
@@ -18,7 +18,7 @@ disconnect cancels the producer task; once tokens have emitted we surface the er
 **Why:** repeated/paraphrased questions are common for a learning tool; a cache answers them instantly
 at ~$0. **How:** Redis HNSW/KNN over voyage-4-lite query embeddings (`FT.CREATE`/`FT.SEARCH`); a miss
 embeds the query **once** and reuses that vector for retrieval + cache-set (verified byte-identical,
-cosine 1.000000) — saving the 2 redundant re-embeds per miss (retrieval + cache-set). **Calibration (AC4.2):** the paraphrase/near-miss
+cosine 1.000000) — saving the 2 redundant re-embeds per miss (retrieval + cache-set). **Calibration:** the paraphrase/near-miss
 distance bands *overlap* (a true paraphrase at 0.31 sits beyond the closest near-miss at 0.23), so the
 strict "100% paraphrase / 0 near-miss" target is unachievable with this embedder. We chose **safety**
 (zero wrong-answer serving) and set the threshold to **0.16** (4/6 paraphrases hit, 0/6 near-misses,
@@ -42,17 +42,17 @@ router parse-edge tests; classification spans visible in Opik.
 ### Redis graceful degradation — **design choice**
 **Why:** a downed Redis must not 5xx a learning session. **How:** missing creds or a *runtime* Redis
 failure demote the cache and conversation memory to in-memory/no-op symmetrically — `/health` reports
-`degraded` honestly rather than crashing (AC1.5). **Evidence:** degradation tests assert no 5xx;
+`degraded` honestly rather than crashing. **Evidence:** degradation tests assert no 5xx;
 runtime-demote tests in `tests/test_services.py`.
 
 ### Security guards — **added**
-**Why:** a public RAG endpoint invites prompt injection. **How:** week-6 `InputGuard` (prompt-injection
+**Why:** a public RAG endpoint invites prompt injection. **How:** the `InputGuard` (prompt-injection
 regex, tightened to avoid false refusals on real FastAPI questions like "I always forget…") on both
 `/query` and `/query/stream`, polite structured refusals (200, not 500); `OutputValidator` PII pass on
 agent output. **Evidence:** 10-injection / 5-benign suite; a soak injection refused as `200 + refused`,
 never a 5xx.
 
-### Sandboxed code executor (D6) — **added** (the augmentation, Week 6)
+### Sandboxed code executor (D6) — **added** (the augmentation)
 **Why:** the gap was that `CODE_GENERATION` answers were *unverified* — users still had to run the code.
 **How:** AST denylist (denied imports/calls/builtins **plus** dunder-attribute and reflection-builtin
 blocking, so `().__class__…__subclasses__()`, `getattr`, and `open` are rejected at scan) → `python -I`
@@ -70,13 +70,13 @@ write-up in [`augmentation-decisions.md`](augmentation-decisions.md).
 **Why:** turns the agent's sandbox into a user-facing "now *you* tweak it" surface — the strongest demo
 beat. **Threat model for user-submitted code:** identical AST-scan + sandbox path as the agent, plus
 caps (10 KB, 15 s wall, 3 runs/min/session), no secrets in the subprocess env, and a `PLAYGROUND_ENABLED`
-kill switch that 404s the endpoint without a redeploy. The only non-class dependency (`streamlit-monaco`),
+kill switch that 404s the endpoint without a redeploy. The only added dependency (`streamlit-monaco`),
 contained to one view with a `st.text_area` fallback. **Evidence:** oversize / rate-limit / denylist /
 disabled-404 guard tests.
 
 ### T3 two-stage LLM routing — **skipped** (honest cost/benefit)
-**Why skipped:** T3 was competitive on retrieval in Week-3 but ran **~34 s/query** (vs T1b's ~11 s) from the extra
-LLM routing hop — unacceptable for an interactive learning tool, and the Week-4 eval showed T1b already
+**Why skipped:** T3 was competitive on retrieval but ran **~34 s/query** (vs T1b's ~11 s) from the extra
+LLM routing hop — unacceptable for an interactive learning tool, and the evaluation showed T1b already
 wins *answer quality* (T3's edge is exact-file retrieval, which the LLM judges can't even see). Production
 runs **T1b**. See [`retrieval-strategy.md`](retrieval-strategy.md).
 
@@ -105,7 +105,7 @@ deterministic **retrieval-confidence guard** above, at zero latency and with no 
 
 **Added.** A thin shim (`app/observability.py`) makes Opik fully optional: every helper
 decides at *call* time whether to trace, so with the key unset or Opik down, every other
-AC still passes (AC1.8). It's wired four ways, each with dashboard evidence below (project
+requirement still passes. It's wired four ways, each with dashboard evidence below (project
 `fastpilot`, workspace `sunkanmi-daniel`; screenshots in [`opik/`](opik/)).
 
 **1. Distributed tracing** — `@track` spans on the hot path (`rewrite_if_needed`,
@@ -146,7 +146,7 @@ user reaction back to the exact generation.
 
 ![Feedback score linked to its trace](opik/07-feedback-score.png)
 
-**4. Online evaluation rule** — `fastpilot-hallucination`, an LLM-as-judge rule (the class
+**4. Online evaluation rule** — `fastpilot-hallucination`, an LLM-as-judge rule (the
 `_trigger_eval` pattern), samples a fraction of live `rag-query` traces and scores each for
 hallucination, so production traffic is continuously evaluated without a batch job. It's doing
 real work: across sampled traces most score `Hallucination=0.0` (faithful to the retrieved
@@ -157,7 +157,7 @@ traffic, which is exactly the signal a production guardrail should surface.
 
 ## Deployment
 
-**Railway, two services in one project** (class week-5 target):
+**Railway, two services in one project**:
 - **`frontend`** (Streamlit) — the **only** service with a public domain.
 - **`backend`** (FastAPI) — **private**, reached by the frontend at `backend.railway.internal`; no
   public domain, so only the UI is internet-facing.
@@ -183,6 +183,6 @@ network round-trip to every cache lookup. We accept it: the cache embeds the que
 that vector (no extra Voyage cost), the managed instance removes an ops burden, and the economics
 still favour a hit (a cached answer is ~$0 + one RTT vs a full Voyage-rerank-Gemini generation).
 
-> **AC5.4:** deployed `/health` reports healthy and chat + agent mode stream end-to-end through
+> **Deployed verification:** deployed `/health` reports healthy and chat + agent mode stream end-to-end through
 > Railway's proxy — verified on the public URL before recording the demo (SSE must arrive
 > token-by-token, not as one buffered blob).

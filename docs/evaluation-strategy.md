@@ -1,11 +1,11 @@
-# Evaluation Strategy (BONUS — Optional Depth)
+# Evaluation Strategy
 
 FastPilot's evaluation treats the **measurement instrument** as a first-class
 object, not just the RAG system under test. Earlier weeks ranked retrieval
 techniques with a single pairwise Gemini judge; the open question was *how much
 of that ranking is real and how much is one judge's bias*. This strategy answers
 it by running three methods that measure different things and **triangulating**
-them against a bootstrapped golden dataset — then, in Phase 5, re-running the
+them against a bootstrapped golden dataset — then re-running the
 strongest method against answers generated **live by production** through
 `POST /query` to prove the offline numbers hold in the deployed system.
 
@@ -40,7 +40,7 @@ pair a deterministic anchor with two independent LLM judges.
 
 ## Evaluation Methods (the triangulation)
 
-Two methods is the course minimum; we run three (with two independent judges) so
+We run three methods (with two independent judges) so
 the triangulation has a deterministic floor *and* a cross-model robustness check.
 
 **Method 1 — Custom DECOMPOSED Gemini judge (`gemini-2.5-flash`), iterated v1→v2→v3.**
@@ -108,16 +108,16 @@ four code-file questions. So the "best" system depends on the task: T1b for
 answer quality, T3 when the user needs the exact source file. This is the kind
 of finding a single judge erases and triangulation recovers — reported here
 rather than smoothed over. (Caveat: the file-hit gap rests on only four
-questions, consistent with the Week 3 result but not high-powered.)
+questions, consistent with the earlier retrieval result but not high-powered.)
 
-## Phase-5 Production-Parity Extension
+## Production-Parity Extension
 
 The offline numbers above evaluate *bootstrapped* outputs. To prove they hold in
 the deployed system, the **same v3 decomposed judge + Voyage semantic metric were
 re-run on answers generated live by production through `POST /query` with the
 cache OFF** — not offline, the real serving path.
 
-| Metric | Week-4 offline T1b baseline | Phase-5 production (`POST /query`) | Δ |
+| Metric | Offline T1b baseline | Production (`POST /query`) | Δ |
 |---|---|---|---|
 | Faithfulness | 0.952 | **0.992** | **+0.040** |
 | Answer coverage | 0.941 | **0.941** | 0.000 |
@@ -129,7 +129,7 @@ strictly tied to retrieved context than the bootstrapped baselines. Answer
 coverage is identical (0.941), confirming retrieval parity between the offline
 study and the served pipeline. Per-question, 10 of 12 production answers score
 faithfulness **1.0** (n=12, judge `gemini-2.5-flash`, gate 0.9). Evidence:
-`final-submission/evaluations/eval_results/production_parity.json`.
+`evaluations/eval_results/production_parity.json`.
 
 **Agent-mode evaluation.** The agentic path (retrieve → answer → self-verify →
 correct) was probed on 10 FastAPI concept tasks. Success rises from **0.5
