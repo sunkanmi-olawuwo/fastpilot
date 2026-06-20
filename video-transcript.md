@@ -2,7 +2,7 @@
 
 > A **< 3-minute** screen recording against the **deployed public URL**. This file doubles as the
 > **teleprompter** (read the **SAY** lines aloud) and the **submitted transcript** (the SAY lines are
-> the transcript). Target ~2:45 so you stay under 3:00. Do one practice run first.
+> the transcript). Target ~3:00; a tighter ~2:35 path is noted at the end. Do one practice run first.
 
 ## Before you hit record (warmup)
 - Open the **public frontend URL** (deployed — see `DEPLOY.md`). Sidebar expanded so the mode switcher shows. Pick light *or* dark and stay there.
@@ -11,6 +11,7 @@
   - **Chat:** `How do I add JWT authentication to a FastAPI app?`
   - **Follow-up:** `can I make the token expire?`
   - **Agent:** `Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input.`
+- Have the **architecture diagram** open in a tab (from the README) to flash during System Design.
 - Close other tabs/notifications. Record at 1280-wide so the UI matches the screenshots.
 
 ---
@@ -27,24 +28,27 @@
 > **Chat** to understand, **Agent** to watch, and **Playground** to practice."
 
 ## System Design
-**[0:20 · ON SCREEN: stay on the welcome screen (or flash the architecture diagram from the README)]**
+**[0:20 · ON SCREEN: flash the architecture diagram (README), then back to the app]**
 
-> **SAY:** "The frontend is Streamlit; it talks to a FastAPI backend over server-sent events. Every
-> question runs through **hybrid retrieval** in Qdrant — dense Voyage embeddings plus BM25, fused and
-> then **reranked** — and **Gemini 2.5 Flash** writes a cited answer. Redis holds conversation memory
-> and a semantic cache, and **Opik** traces every call."
+> **SAY:** "The frontend is Streamlit, streaming from a FastAPI backend over server-sent events. The
+> retrieval path isn't a default — I ran a pairwise bake-off and **this configuration won**: hybrid
+> search in Qdrant, dense Voyage embeddings plus BM25, fused and then **reranked** — the reranker alone
+> was worth **+21 points**. I even built a two-stage, LLM-routed variant and **deliberately skipped
+> it** — competitive on quality, but it added about **30 seconds a query**. Gemini 2.5 Flash generates;
+> Redis backs conversation memory and a semantic cache; and the whole system **degrades gracefully** —
+> if Redis or Qdrant drops, `/health` reports it instead of crashing. **Opik** traces every call."
 
 ## Live Demo
 
 ### Q1 — Chat: cited answers
-**[0:40 · ON SCREEN: Chat mode. Send: "How do I add JWT authentication to a FastAPI app?"]**
+**[0:55 · ON SCREEN: Chat mode. Send: "How do I add JWT authentication to a FastAPI app?"]**
 
 > **SAY:** "Let's ask how to add JWT auth. The answer streams in token by token, and every claim
 > carries a **numbered citation** back to its source — here, the `OAuth2PasswordBearer` scheme straight
 > from the official docs. I can open the sources to see exactly what it grounded on."
 
 ### Q2 — Follow-up rewrite + semantic cache
-**[1:05 · ON SCREEN: send the follow-up: "can I make the token expire?"]**
+**[1:20 · ON SCREEN: send the follow-up: "can I make the token expire?"]**
 
 > **SAY:** "Now a vague follow-up — *can I make the token expire?* Watch the **'↻ searched as'** line:
 > it rewrites my question into a standalone query before retrieving, using the conversation so far. And
@@ -52,23 +56,25 @@
 > second model call."
 
 ### Q3 — Agent: write → run → self-correct (the differentiator)
-**[1:30 · ON SCREEN: switch to Agent. Send: "Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input."]**
+**[1:45 · ON SCREEN: switch to Agent. Send: "Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input."]**
 
-> **SAY:** "Here's what makes it more than a chatbot. I'll ask the **Agent** to write *and run* an
-> endpoint that returns 422 on bad input. Follow the timeline: it plans, retrieves grounding, writes
-> code, and runs it in a **sandbox**. The first attempt **fails an assertion** — and instead of giving
-> up, it reads the traceback, **fixes the code, and re-runs to exit zero**. That self-correction loop
-> takes first-attempt success from about **50% to 100%** across our ten evaluation tasks."
+> **SAY:** "Here's what makes it more than a chatbot. The Agent runs a **deterministic, code-driven
+> loop — not free-form tool-calling**. I'll ask it to write *and run* an endpoint that returns 422 on
+> bad input. Follow the timeline: it plans, retrieves grounding, writes code, and runs it in a
+> **sandbox**. The first attempt **fails an assertion** — and instead of giving up, it reads the
+> traceback, **fixes the code, and re-runs to exit zero**. That self-correction loop takes
+> first-attempt success from about **50% to 100%** across our ten evaluation tasks."
 
 ### Q3b — Playground + close
-**[2:20 · ON SCREEN: click "Send to Playground", change a value in the editor, click Run]**
+**[2:35 · ON SCREEN: click "Send to Playground", change a value in the editor, click Run]**
 
 > **SAY:** "And I can send that exact code into the **Playground**, change it myself, and re-run it in
-> the same sandbox. Everything here is measured — production faithfulness came out at **0.992** — and
-> I'm honest about the limits: the sandbox is in-process defense-in-depth, with Docker isolation as the
-> documented next step. That's **FastPilot — learn FastAPI, fast.**"
+> the **same locked-down sandbox — AST-scanned, no network, no secrets**. Everything here is measured —
+> production faithfulness came out at **0.992** — and I'm honest about the limits: that sandbox is
+> in-process defense-in-depth, with Docker isolation as the documented next step. That's
+> **FastPilot — learn FastAPI, fast.**"
 
-**[~2:45 · END — stop recording]**
+**[~3:00 · END — stop recording]**
 
 ---
 
@@ -76,11 +82,13 @@
 | Beat | Mark | Budget |
 |---|---|---|
 | Hook + product | 0:00 | ~20s |
-| System design | 0:20 | ~20s |
-| Q1 Chat + citations | 0:40 | ~25s |
-| Q2 follow-up + cache | 1:05 | ~25s |
-| Q3 Agent self-correct | 1:30 | ~50s |
-| Q3b Playground + close | 2:20 | ~25s |
+| System design (evidence + skip + resilience) | 0:20 | ~35s |
+| Q1 Chat + citations | 0:55 | ~25s |
+| Q2 follow-up + cache | 1:20 | ~25s |
+| Q3 Agent self-correct | 1:45 | ~50s |
+| Q3b Playground + close | 2:35 | ~25s |
 
-**If you run long:** trim the System Design paragraph to one sentence and drop the "open the sources"
-aside in Q1 — that buys ~20s and keeps it under 2:30.
+**If you run long:** in System Design keep the bake-off sentence (hybrid + rerank **+21**) and the
+skipped two-stage variant, but drop the resilience line; and cut the "open the sources" aside in Q1.
+That buys ~25s and lands you under 2:35 — the design *judgment* (evidence + a rejected alternative)
+is what matters, so protect that over the component roll-call.
