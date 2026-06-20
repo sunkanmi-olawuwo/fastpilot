@@ -13,8 +13,10 @@
 
 ### Retrieval + generation
 - **Hybrid chunking** — AST (tree-sitter) for code, markdown-aware recursive for prose;
-  BGE→Voyage-4-lite migration removed 27.9% silent truncation. (`docs/chunking-strategy.md`)
-- **T1b pipeline** — dense + BM25 → RRF → Voyage rerank-2.5 → top 10. (`docs/retrieval-strategy.md`)
+  BGE→Voyage-4-lite migration removed 27.9% silent truncation.
+  ([full essay](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/chunking-strategy.md))
+- **T1b pipeline** — dense + BM25 → RRF → Voyage rerank-2.5 → top 10; won 30/36 pairwise, rerank +21.
+  ([full essay](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/retrieval-strategy.md))
 - **Retrieval-confidence guard** — latency-free `low_confidence` flag (CRAG slice).
 - **Query router** — classification + type-specific prompts.
 
@@ -37,7 +39,9 @@
 
 ## Measured results
 All measured **live through the production pipeline** (`POST /query`); evidence in
-`evaluations/eval_results/`:
+`evaluations/eval_results/`. The instrument — a triangulated eval (LLM faithfulness +
+deterministic coverage + a human probe) — is described in the
+[evaluation-strategy essay](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/evaluation-strategy.md):
 
 | Metric | Result | Evidence |
 |---|---|---|

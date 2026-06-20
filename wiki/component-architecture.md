@@ -7,11 +7,15 @@ The backend is organized into four layers under `app/`:
 
 - **`services/`** — the RAG runtime (pipeline, cache, memory, router).
 - **`components/`** — Haystack-compatible retrieval pieces (hybrid retriever, reranker).
-- **`augmentations/`** — the Week-6 add-ons (agent, sandbox executor, security, rate limit).
+- **`augmentations/`** — the augmentation layer (agent, sandbox executor, security, rate limit).
 - **`prompts/`** — prompt templates + Opik registry (no logic, no heavy imports).
 
 Plus cross-cutting modules: `config.py` (settings), `observability.py` (Opik shim),
 `dogfood.py` (usage log), `formatting.py`, `redis_client.py`, `logging_config.py`, `models.py`.
+
+> Every production service below is an explicit **add / skip decision** with a rationale —
+> the full reasoning (and what was *skipped*) is in the
+> [production-decisions essay](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/production-decisions.md).
 
 ## Services (`app/services/`)
 
@@ -34,6 +38,15 @@ flowchart LR
   task is cancelled if the client disconnects.
 - Falls back to `gemini-2.5-flash-lite` on the primary model's failure (`fallback_used`).
 - `is_healthy()` gates `/health` and the `/fix` endpoint.
+
+> **Why this design (evidence, not a default).** T1b was picked by a 4-way pairwise bake-off:
+> it won **30 / 36** comparisons, **reranking alone was worth +21 points**, and a two-stage
+> LLM-routing variant (T3) — competitive on retrieval but **~34 s/query** — was measured and
+> *skipped*. The index it retrieves over is built by a hybrid **AST (code) + markdown-recursive
+> (prose)** chunker; migrating **BGE → Voyage-4-lite (2048-d)** removed **27.9% silent chunk
+> truncation**. Full essays:
+> [retrieval-strategy](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/retrieval-strategy.md) ·
+> [chunking-strategy](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/chunking-strategy.md).
 
 ### Semantic cache — `semantic_cache.py`
 Redis **HNSW vector search** for sub-50 ms answers to repeated/paraphrased queries. Returns
@@ -63,7 +76,7 @@ concurrently because both depend only on the standalone query.
 ## Augmentations (`app/augmentations/`)
 
 ### Agent orchestrator — `agent_orchestrator.py`
-A **deterministic, code-driven loop** (not free-form tool calling), mirroring the class
+A **deterministic, code-driven loop** (not free-form tool calling), mirroring the
 CRAG routing philosophy. Each step is yielded as an SSE event so the UI timeline updates live.
 
 ```mermaid
@@ -82,8 +95,14 @@ flowchart TD
 
 Framework-light and fully unit-testable: inject a fake `pipeline` + fake `executor`.
 
+> **Measured impact (the augmentation's whole point).** First-attempt success runs ~50%; the
+> **≤2-fix self-correction loop lifts it to 100%** (+50 pts) across the 10 golden tasks. **93%**
+> of cited chunks mention the API used, and fix-from-traceback recovers **3 / 3** broken snippets.
+> Full essay:
+> [augmentation-decisions](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/augmentation-decisions.md).
+
 ### Sandboxed code executor — `code_executor.py`
-The one net-new piece with no class equivalent. Runs agent/user FastAPI code behind
+The one net-new piece with no off-the-shelf equivalent. Runs agent/user FastAPI code behind
 **layered defenses**:
 
 ```mermaid

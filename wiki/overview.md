@@ -23,7 +23,8 @@ example repos (the full-stack template), and GitHub issues/discussions — and *
 docs doesn't prove understanding. The only way to verify understanding is to run code,
 which means leaving the docs. FastPilot pulls retrieval + generation + a code sandbox into
 one loop so a learner can ask, watch working code get produced, and then tinker. Full
-framing in `docs/scoping.md`.
+framing — the problem, the user, and the corpus (514 docs → 4,232 chunks, 4 sources) — is in
+the [scoping essay](https://github.com/sunkanmi-olawuwo/fastpilot/blob/main/docs/scoping.md).
 
 ## Tech stack
 

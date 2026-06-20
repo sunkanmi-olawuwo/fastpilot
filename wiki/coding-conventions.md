@@ -20,8 +20,8 @@ Ruff, configured in `pyproject.toml`:
 
 ## Documentation style
 - **Module docstrings explain the *why* and the request/data flow**, not just the *what*
-  (see `app/main.py`, `app/augmentations/code_executor.py`). Many reference the original
-  plan/AC IDs (e.g. "D6", "AC1.5") — that's intentional traceability; keep the pattern when
+  (see `app/main.py`, `app/augmentations/code_executor.py`). Many reference internal
+  decision IDs (e.g. "D6", "D8") — that's intentional traceability; keep the pattern when
   extending an existing module.
 - **Inline comments justify decisions** ("Refusals are NOT written to conversation memory
   because…"), they don't narrate mechanics. Prefer a comment that explains a trade-off over

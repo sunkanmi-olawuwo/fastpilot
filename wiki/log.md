@@ -5,6 +5,20 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-20 — Wiki embeds design conclusions (links out, no file moves)
+
+Decided to keep `docs/` (deep design essays, code-coupled) and `wiki/` (the living map) as two
+cross-linked systems rather than merging them. To make the wiki self-sufficient for the *takeaways*:
+- [[component-architecture]] now carries the **evidence conclusions** inline — T1b won 30/36 pairwise
+  (+21 from rerank, T3 skipped ~34 s), chunking removed 27.9% truncation, and the agent's
+  ≤2-fix loop lifts success ~50% → 100% — each with a **link out to the full essay**. Added an
+  add/skip-decision pointer to the production-decisions essay.
+- [[overview]] links the scoping essay (problem + corpus); [[feature-coverage]] links the chunking,
+  retrieval, and evaluation essays. All link-outs are **absolute GitHub URLs** so they resolve in the
+  published GitHub Wiki (relative `../docs/` paths don't).
+- Also de-course-ified residual wiki references for consistency (`Week-6` → augmentation layer,
+  `class CRAG` → CRAG, the `AC1.5` convention example → `D#` decision IDs).
+
 ## 2026-06-20 — De-course-ified the design docs
 
 Removed coursework framing from the `docs/` design essays so they read as professional engineering
