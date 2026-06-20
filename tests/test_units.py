@@ -49,8 +49,9 @@ def test_make_redis_client_blanks_become_none():
 
 
 def test_make_redis_client_tls_uses_ssl_connection():
-    from app.redis_client import make_redis_client
     from redis.connection import SSLConnection
+
+    from app.redis_client import make_redis_client
 
     client = make_redis_client(_settings(redis_ssl=True), decode_responses=True)
     assert client.connection_pool.connection_class is SSLConnection
@@ -94,6 +95,7 @@ def test_rate_limiter_blank_session_bucketed_as_anon():
 
 def test_rate_limiter_redis_path_counts_and_blocks():
     import fakeredis
+
     from app.augmentations.rate_limit import RateLimiter
 
     rl = RateLimiter(redis_client=fakeredis.FakeRedis(decode_responses=True), per_minute=2)

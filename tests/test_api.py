@@ -6,6 +6,7 @@ import json
 
 import fakeredis
 import pytest
+
 from tests.conftest import FakeCache, FakeChatGenerator, FakePipeline, build_client
 
 
@@ -225,10 +226,11 @@ async def test_metrics_get_stats_failure_hits_global_handler():
     (Built with raise_app_exceptions=False so the test sees the handler's response
     rather than ASGI re-raising it, matching real ASGI-server behaviour.)"""
     import fakeredis
-    from app.services import reset_services, set_services
-    from app.services.conversation import ConversationService
     from asgi_lifespan import LifespanManager
     from httpx import ASGITransport, AsyncClient
+
+    from app.services import reset_services, set_services
+    from app.services.conversation import ConversationService
 
     class _BoomStatsCache(FakeCache):
         def get_stats(self):

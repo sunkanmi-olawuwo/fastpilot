@@ -7,6 +7,7 @@ network — the real pipeline *build* (Voyage/FastEmbed/Qdrant) is a live test.
 from __future__ import annotations
 
 import pytest
+
 from app.services.rag_pipeline import ProductionRAGPipeline
 
 

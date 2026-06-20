@@ -12,7 +12,7 @@ either way — a held probe is robustness (often FastAPI/Pydantic's framework gu
 surfacing through the agent's thin self-test); a broken one is a logged limitation.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/09_human_verification_probes.py
+    uv run python scripts/09_human_verification_probes.py
 """
 
 from __future__ import annotations

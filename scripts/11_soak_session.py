@@ -11,7 +11,7 @@ Writes evaluations/eval_results/soak_session.json; exits non-zero on any 5xx or 
 metrics mismatch.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/11_soak_session.py
+    uv run python scripts/11_soak_session.py
 """
 
 from __future__ import annotations

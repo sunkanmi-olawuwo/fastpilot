@@ -10,9 +10,10 @@ import json
 from contextlib import asynccontextmanager
 
 import fakeredis
-from app.augmentations.code_executor import ExecutionResult
 from asgi_lifespan import LifespanManager
 from httpx import ASGITransport, AsyncClient
+
+from app.augmentations.code_executor import ExecutionResult
 from tests.conftest import FakeCache, FakeChatGenerator, FakePipeline, FakeRouter
 
 

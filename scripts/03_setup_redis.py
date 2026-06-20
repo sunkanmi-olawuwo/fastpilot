@@ -7,11 +7,11 @@ Use Redis Cloud (Search & Query capability) or the ``redis/redis-stack-server``
 test container — never plain ``redis``.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/03_setup_redis.py
+    uv run python scripts/03_setup_redis.py
 
 Point it at the local test container instead of Redis Cloud with:
     REDIS_HOST=localhost REDIS_PORT=6380 REDIS_SSL=false \\
-        uv run python final-submission/scripts/03_setup_redis.py
+        uv run python scripts/03_setup_redis.py
 """
 
 from __future__ import annotations

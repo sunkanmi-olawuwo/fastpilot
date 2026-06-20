@@ -1,7 +1,7 @@
 """Verify the Week-3 hybrid Qdrant collection is reachable and populated.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/02_verify_collections.py
+    uv run python scripts/02_verify_collections.py
 
 Exits 0 if the collection exists with points, 1 otherwise.
 """

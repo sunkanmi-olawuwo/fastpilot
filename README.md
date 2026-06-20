@@ -1,12 +1,55 @@
-# FastPilot — *Learn FastAPI, fast.*
+<div align="center">
 
-A learning companion for FastAPI, built as a production RAG system over the official
-docs + full-stack template + GitHub issues/discussions. Three modes form a learning
-loop: **Chat** (understand — cited answers) · **Agent** (watch — writes, runs, and
-self-corrects code in a sandbox) · **Playground** (practice — edit and run code yourself).
+# ⚡ FastPilot
 
-> **Final submission.** All three modes (Chat / Agent / Playground) are live and tested;
-> production RAG backend + Streamlit frontend, evaluated end-to-end through `POST /query`.
+### *Learn FastAPI, fast.*
+
+A production **RAG** system that closes the loop from reading to running:
+**Understand → Watch → Practice.**
+
+[![CI](https://github.com/sunkanmi-olawuwo/fastpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/sunkanmi-olawuwo/fastpilot/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11–3.13-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-210%20passing-brightgreen)
+![Coverage gate](https://img.shields.io/badge/coverage-≥90%25-brightgreen)
+
+<!-- ▶ LIVE DEMO: paste the public Railway URL here once deployed (see DEPLOY.md) -->
+**[▶ Live demo](#)** · **[2-min walkthrough](#)** · **[Full write-up](submission.md)**
+
+<img src="docs/screenshots/01-welcome.png" alt="FastPilot welcome screen" width="780">
+
+</div>
+
+> **Note** — the live-demo and video links above are placeholders until the app is deployed
+> (one-time Railway setup in [`DEPLOY.md`](DEPLOY.md)). The screenshots below are real renders of the UI.
+
+---
+
+## The problem
+
+Learning FastAPI is **fragmented and unverified**. The knowledge lives in three disconnected places —
+the [official docs](https://fastapi.tiangolo.com/), example repos like the full-stack template, and
+GitHub issues/discussions — and **reading doesn't prove you understood it**: you can read the
+path-parameter docs and still ship an endpoint that 500s. The only way to *verify* understanding is to
+run code, which means leaving the docs and debugging alone.
+
+**FastPilot closes that loop** with three modes that form a learning cycle:
+
+| Mode | Verb | What it does |
+|---|---|---|
+| 💬 **Chat** | *understand* | Cited answers grounded in the FastAPI corpus — every claim carries a `[n]` source. |
+| ▶️ **Agent** | *watch* | Writes, runs, and **self-corrects** real code in a sandbox — you watch it debug. |
+| 🧪 **Playground** | *practice* | Edit the agent's code and re-run it yourself in the same sandbox. |
+
+<table>
+<tr>
+<td width="33%"><img src="docs/screenshots/02-chat.png" alt="Chat mode — cited answer"><br><sub><b>Chat</b> — grounded answer with a <code>[1]</code> citation</sub></td>
+<td width="33%"><img src="docs/screenshots/03-agent.png" alt="Agent mode — self-correction timeline"><br><sub><b>Agent</b> — Run → AssertionError → Fix & rerun → exit 0</sub></td>
+<td width="33%"><img src="docs/screenshots/04-playground.png" alt="Playground mode — sandboxed run"><br><sub><b>Playground</b> — edit & run in the isolated sandbox</sub></td>
+</tr>
+</table>
+
+---
 
 ## Architecture
 
@@ -14,62 +57,98 @@ self-corrects code in a sandbox) · **Playground** (practice — edit and run co
 Streamlit frontend ──HTTP/SSE──> FastAPI backend ──> Qdrant Cloud (hybrid retrieval)
                                           │            Voyage (embed + rerank-2.5)
                                           │            Gemini 2.5 Flash (generate)
-                                          ├──> Redis Cloud (conversation + semantic cache)
+                                          ├──> Redis Cloud (conversation memory + semantic cache)
                                           └──> Opik (tracing, prompt versioning, feedback)
 ```
 
-## Key docs
-Start with [`submission.md`](submission.md) (the full write-up + self-assessment). Then:
+The backend ships SSE token streaming, a semantic cache, conversation memory with conditional
+query-rewrite, a query router, deterministic security guards, and graceful degradation when Redis or
+Qdrant is unavailable. The agent runs generated code through a hardened in-process sandbox (AST
+denylist, env scrubbed, network off). Every production service is an explicit **add / skip decision**,
+documented in [`docs/production-decisions.md`](docs/production-decisions.md).
 
-| Doc | Covers |
+**Tech:** FastAPI · Streamlit · Qdrant Cloud · Voyage AI (voyage-4-lite + rerank-2.5) · Gemini 2.5
+Flash · Redis Cloud (RediSearch) · Opik/Comet · Docker · Railway · `uv`.
+
+---
+
+## What makes it more than a chatbot
+
+Each decision is **evidence-backed**, not a default — full reasoning in the linked docs:
+
+- **Chunking** — hybrid chunker: **AST (tree-sitter)** for code, markdown-aware recursive for prose,
+  routed by language so a code chunk is never split mid-function. Migrating **BGE → Voyage-4-lite
+  (2048-d)** eliminated **27.9% silent chunk truncation**. → [`docs/chunking-strategy.md`](docs/chunking-strategy.md)
+- **Retrieval (T1b)** — hybrid **dense + BM25 → RRF → Voyage rerank-2.5 → top 10**. T1b won
+  **30/36 pairwise** comparisons; reranking alone was worth **+21 points**. A two-stage LLM-routing
+  variant was *measured and skipped* (competitive, but ~34 s latency). → [`docs/retrieval-strategy.md`](docs/retrieval-strategy.md)
+- **The augmentation** — a grounded **code-runner agent** + Playground, designed from a real gap and
+  measured ON vs OFF. → [`docs/augmentation-decisions.md`](docs/augmentation-decisions.md)
+- **Evaluation** — triangulated judges (LLM faithfulness + deterministic coverage + a human probe).
+  → [`docs/evaluation-strategy.md`](docs/evaluation-strategy.md)
+
+---
+
+## Results
+
+All measured **live through the production pipeline** (`POST /query`); evidence in
+[`evaluations/eval_results/`](evaluations/eval_results/):
+
+| Metric | Result |
 |---|---|
-| [`docs/scoping.md`](docs/scoping.md) | the problem, the user, the corpus (Problem & Data) |
-| [`docs/chunking-strategy.md`](docs/chunking-strategy.md) · [`docs/retrieval-strategy.md`](docs/retrieval-strategy.md) | chunking + the T1b retrieval pipeline |
-| [`docs/production-decisions.md`](docs/production-decisions.md) | every production service as an add/skip decision + Opik + deploy |
-| [`docs/augmentation-decisions.md`](docs/augmentation-decisions.md) · [`docs/evaluation-strategy.md`](docs/evaluation-strategy.md) | the agent augmentation + the triangulated eval (bonus) |
-| [`docs/iteration-log.md`](docs/iteration-log.md) · [`evaluations/dogfood_log.md`](evaluations/dogfood_log.md) | build history (with real failure→fix stories) + real-usage log |
+| Production faithfulness (LLM judge) | **0.992** |
+| Production answer-coverage (deterministic) | **0.941** |
+| Agent success: first-attempt → with self-correction | **5/10 → 10/10** (+50 pts) |
+| Agent grounding (cited chunks mention the API) | **93%** (25/27) |
+| Fix-with-AI on broken snippets | **3/3** |
+| Soak (20-call mixed session) | **0 × 5xx** |
+| Concurrent load (8 sessions + 2 agents, 24 live generations at once) | **0 × 5xx** |
 
-Measured results live in [`evaluations/eval_results/`](evaluations/eval_results/).
+**Honest findings** (named, not buried): the semantic cache is tuned for **zero wrong-answer serving
+over hit-rate**; a human-in-the-loop probe found a robustness gap the agent's self-tests missed
+(negative pagination); the Opik online-eval rule flagged a live answer at hallucination 0.85 — the
+guardrail does real work. Full self-assessment + limitations in [`submission.md`](submission.md).
 
-## Prerequisites (accounts + keys)
+---
 
-Copy `.env.example` → `.env` (repo root) and fill in:
+## Quickstart
+
+**Prerequisites:** Python 3.11–3.13, [`uv`](https://github.com/astral-sh/uv), and accounts for the
+services below (free tiers suffice).
+
+```bash
+# 1. Install deps
+uv sync --extra dev
+
+# 2. Configure secrets
+cp .env.example .env        # then fill in your keys
+
+# 3. Verify environment, Qdrant collection, and Redis (creates the cache index)
+uv run python scripts/01_verify_environment.py
+uv run python scripts/02_verify_collections.py
+uv run python scripts/03_setup_redis.py
+
+# 4a. Run with Docker (mirrors the Railway two-service topology)
+docker compose up backend frontend --build
+
+# 4b. …or no Docker, two terminals:
+#   Terminal 1 — backend (FastAPI → http://localhost:8000, docs at /docs)
+uv run uvicorn app.main:app --port 8000 --reload
+#   Terminal 2 — frontend (Streamlit → http://localhost:8501); run from frontend/ so the theme loads
+cd frontend && uv run streamlit run app.py
+```
 
 | Service | Vars | Where |
 |---|---|---|
 | Qdrant Cloud | `QDRANT_URL`, `QDRANT_API_KEY` | https://cloud.qdrant.io |
-| Google Gemini | `GOOGLE_API_KEY` | https://aistudio.google.com/apikey |
 | Voyage AI | `VOYAGE_API_KEY` | https://dash.voyageai.com |
-| **Redis Cloud** | `REDIS_HOST/PORT/PASSWORD` | https://redis.io/cloud — **enable "Search & Query"** |
-| **Opik** | `OPIK_API_KEY`, `OPIK_WORKSPACE` | https://www.comet.com → Opik |
+| Google Gemini | `GOOGLE_API_KEY` | https://aistudio.google.com/apikey |
+| Redis Cloud | `REDIS_HOST/PORT/PASSWORD` | https://redis.io/cloud — **enable "Search & Query"** |
+| Opik | `OPIK_API_KEY`, `OPIK_WORKSPACE` | https://www.comet.com → Opik |
 
-## Quickstart
+Deploying your own copy? See [`DEPLOY.md`](DEPLOY.md) (Railway, two services).
 
-```bash
-# 1. Install deps (from repo root)
-uv sync --extra dev
-
-# 2. Verify environment, Qdrant collection, and Redis (creates the cache index)
-uv run python final-submission/scripts/01_verify_environment.py
-uv run python final-submission/scripts/02_verify_collections.py
-uv run python final-submission/scripts/03_setup_redis.py
-
-# 3. Run the stack locally (talks to Redis Cloud + Qdrant/Voyage/Gemini/Opik via ../.env)
-
-#  Option A — Docker (mirrors the Railway two-service topology):
-cd final-submission && docker compose up backend frontend --build
-
-#  Option B — no Docker, two terminals (from the repo root):
-#    Terminal 1 — backend (FastAPI → http://localhost:8000, docs at /docs):
-.venv/bin/python -m uvicorn app.main:app --app-dir final-submission --port 8000 --reload
-#    Terminal 2 — frontend (Streamlit → http://localhost:8501); run from frontend/ so the theme loads:
-cd final-submission/frontend && ../../.venv/bin/python -m streamlit run app.py
-```
-
-> The frontend finds the backend via `API_BASE_URL` (default `http://localhost:8000`).
-> `.env` is loaded by absolute path, so the working directory doesn't affect config.
-> Note: after a repo move the venv's `uvicorn`/`streamlit` console scripts can carry a stale
-> shebang — invoking via `python -m` (above) avoids it; `uv run uvicorn …` also works.
+---
 
 ## Tests
 
@@ -77,14 +156,28 @@ cd final-submission/frontend && ../../.venv/bin/python -m streamlit run app.py
 # Hermetic unit tests (default — no network, no keys, < 10s)
 uv run pytest
 
-# Integration tests — need the local RediSearch container (stand-in for Redis Cloud)
+# Integration tests — need a local RediSearch container (stand-in for Redis Cloud)
 docker compose --profile test up -d redis-test
 REDIS_HOST=localhost REDIS_PORT=6380 REDIS_SSL=false uv run pytest -m integration
 ```
 
-## Submission packaging
+**210 tests**, ruff-clean, with a **90% coverage gate** enforced in [CI](.github/workflows/ci.yml).
 
-```bash
-uv run gitingest final-submission/ -o sunkanmi_olawuwo_final_submission.txt
-uv run python final-submission/prequalify.py   # must exit 0
-```
+---
+
+## Documentation
+
+| Doc | Covers |
+|---|---|
+| [`submission.md`](submission.md) | full write-up + calibrated self-assessment (start here) |
+| [`docs/scoping.md`](docs/scoping.md) | the problem, the user, the corpus |
+| [`docs/chunking-strategy.md`](docs/chunking-strategy.md) · [`docs/retrieval-strategy.md`](docs/retrieval-strategy.md) | chunking + the T1b retrieval pipeline |
+| [`docs/production-decisions.md`](docs/production-decisions.md) | every production service as an add/skip decision |
+| [`docs/augmentation-decisions.md`](docs/augmentation-decisions.md) · [`docs/evaluation-strategy.md`](docs/evaluation-strategy.md) | the agent augmentation + triangulated eval |
+| [`docs/iteration-log.md`](docs/iteration-log.md) · [`evaluations/dogfood_log.md`](evaluations/dogfood_log.md) | build history (real failure→fix stories) + real-usage log |
+
+---
+
+<div align="center">
+<sub>Built by <b>Sunkanmi Olawuwo</b> · MIT licensed · originally the capstone for a RAG accelerator program.</sub>
+</div>

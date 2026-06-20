@@ -10,6 +10,7 @@ from __future__ import annotations
 import sys
 
 import pytest
+
 from app.augmentations.code_executor import SubprocessExecutor, scan_code
 
 # Fast limits so the timeout case doesn't take 15s.

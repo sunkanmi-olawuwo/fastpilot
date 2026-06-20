@@ -12,7 +12,7 @@ Writes evaluations/eval_results/cache_threshold.json; exits non-zero if the conf
 threshold fails AC4.2.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/10_cache_threshold_experiment.py
+    uv run python scripts/10_cache_threshold_experiment.py
 """
 
 from __future__ import annotations

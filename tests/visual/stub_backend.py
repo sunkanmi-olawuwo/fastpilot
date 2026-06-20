@@ -7,7 +7,7 @@ hermetically. The agent stream deliberately fails attempt 1 and passes attempt 2
 the timeline shows the ✗→✓ self-correction money shot.
 
 Run standalone:
-    uvicorn stub_backend:app --app-dir final-submission/tests/visual --port 8999
+    uvicorn stub_backend:app --app-dir tests/visual --port 8999
 """
 
 from __future__ import annotations

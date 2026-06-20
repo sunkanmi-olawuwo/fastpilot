@@ -1,7 +1,7 @@
 """Dogfood interaction logger (plan §11.2).
 
 Appends one JSON line per exchange to ``dogfood/sessions.jsonl`` at the **repo root**
-— outside ``final-submission/`` so gitingest never bundles the raw log. Feedback is
+(git-ignored, so the raw log never lands in version control). Feedback is
 appended as its own line keyed by ``msg_id`` (append-only is safer than rewriting a
 file under concurrency); the "harvest the dogfood log" step joins the two by msg_id.
 
@@ -19,8 +19,8 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# final-submission/app/dogfood.py -> app -> final-submission -> repo root
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+# app/dogfood.py -> app -> repo root
+_REPO_ROOT = Path(__file__).resolve().parent.parent
 _LOG_DIR = _REPO_ROOT / "dogfood"
 _LOG_PATH = _LOG_DIR / "sessions.jsonl"
 

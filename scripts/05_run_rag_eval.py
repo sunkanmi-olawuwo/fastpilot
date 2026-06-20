@@ -20,7 +20,7 @@ acceptable but the delta must be explained honestly. Writes
 evaluations/eval_results/production_parity.json; exits non-zero below the gate.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/05_run_rag_eval.py
+    uv run python scripts/05_run_rag_eval.py
 """
 
 from __future__ import annotations

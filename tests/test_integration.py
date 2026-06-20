@@ -42,6 +42,7 @@ def redis_url() -> str:
 # --- Conversation memory on real Redis ------------------------------------
 def test_conversation_roundtrip_on_real_redis(redis_url):
     import redis
+
     from app.services.conversation import ConversationService
     from tests.conftest import FakeChatGenerator
 
@@ -68,6 +69,7 @@ def test_conversation_roundtrip_on_real_redis(redis_url):
 
 def test_conversation_window_trims_on_real_redis(redis_url):
     import redis
+
     from app.services.conversation import ConversationService
     from tests.conftest import FakeChatGenerator
 
@@ -108,6 +110,7 @@ class _DeterministicEmbedder:
 
 def test_semantic_cache_knn_roundtrip(redis_url):
     import redis
+
     from app.services.semantic_cache import INDEX_NAME, SemanticCache, create_cache_index
 
     client = redis.Redis.from_url(redis_url, decode_responses=False)  # raw embedding bytes

@@ -202,10 +202,11 @@ async def build_client(*, rag=None, cache=None, conversation=None, router=None, 
     build the app, manage its lifespan, and yield an httpx client. ``api_client``
     is just ``build_client()`` with the fakes exposed for assertions."""
     import fakeredis
-    from app.services import reset_services, set_services
-    from app.services.conversation import ConversationService
     from asgi_lifespan import LifespanManager
     from httpx import ASGITransport, AsyncClient
+
+    from app.services import reset_services, set_services
+    from app.services.conversation import ConversationService
 
     reset_services()
     cache = cache or FakeCache()

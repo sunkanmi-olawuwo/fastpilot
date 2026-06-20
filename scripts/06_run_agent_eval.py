@@ -10,7 +10,7 @@ Needs live creds (Gemini/Qdrant/Voyage). Exits non-zero if the with-correction s
 rate is below the 0.80 gate. Writes a slim JSON to evaluations/eval_results/.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/06_run_agent_eval.py
+    uv run python scripts/06_run_agent_eval.py
 """
 
 from __future__ import annotations

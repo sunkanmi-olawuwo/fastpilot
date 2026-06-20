@@ -1,7 +1,7 @@
 """Verify every credential FastPilot needs is present in the environment.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/01_verify_environment.py
+    uv run python scripts/01_verify_environment.py
 
 Exits 0 if all required keys are set, 1 otherwise. Reads through ``app.config``
 so it checks exactly what the app will read.

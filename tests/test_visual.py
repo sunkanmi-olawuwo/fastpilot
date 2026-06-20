@@ -27,10 +27,10 @@ pytest.importorskip("playwright")
 
 pytestmark = pytest.mark.visual
 
-# .../rag-accelerator-capstone/final-submission/tests/test_visual.py → parents[2] = repo root
-_ROOT = Path(__file__).resolve().parents[2]
-_FRONTEND = _ROOT / "final-submission" / "frontend" / "app.py"
-_STUB_DIR = _ROOT / "final-submission" / "tests" / "visual"
+# .../fastpilot/tests/test_visual.py → parents[1] = repo root
+_ROOT = Path(__file__).resolve().parents[1]
+_FRONTEND = _ROOT / "frontend" / "app.py"
+_STUB_DIR = _ROOT / "tests" / "visual"
 _ARTIFACTS = _STUB_DIR / "artifacts"
 
 

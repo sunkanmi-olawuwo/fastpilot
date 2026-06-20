@@ -12,8 +12,8 @@ but attaches BOTH ``file_path`` and ``category`` to each document's meta *before
 so both propagate onto every chunk — the merge the original step should have done.
 
 Usage (from repo root, with live QDRANT/VOYAGE keys in .env):
-    uv run python final-submission/scripts/07_reindex_production.py --full
-    uv run python final-submission/scripts/07_reindex_production.py --test    # 5 docs/source
+    uv run python scripts/07_reindex_production.py --full
+    uv run python scripts/07_reindex_production.py --test    # 5 docs/source
 """
 
 from __future__ import annotations

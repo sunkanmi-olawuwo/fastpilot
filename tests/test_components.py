@@ -9,9 +9,10 @@ hermetically. The real `build` against live services is a `live` test.
 from __future__ import annotations
 
 import pytest
+from haystack import Document
+
 from app.components.qdrant_hybrid_retriever import QdrantHybridRetriever
 from app.components.voyage_reranker import VoyageReranker
-from haystack import Document
 
 
 # --- Qdrant hybrid retriever ----------------------------------------------

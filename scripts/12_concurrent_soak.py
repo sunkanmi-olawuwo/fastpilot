@@ -12,7 +12,7 @@ A cache hit, a follow-up, and a guard refusal are mixed in. Writes
 evaluations/eval_results/concurrent_soak.json; exits non-zero on any 5xx or mismatch.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/12_concurrent_soak.py
+    uv run python scripts/12_concurrent_soak.py
 """
 
 from __future__ import annotations

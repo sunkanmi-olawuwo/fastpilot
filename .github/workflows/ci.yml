@@ -1,0 +1,39 @@
+name: CI
+
+# Hermetic lint + unit tests for FastPilot. The install is the curated set the
+# unit suite actually imports at module load (haystack core, qdrant-client,
+# voyageai, redis, numpy) — fastembed/google/opik are lazy-imported and never hit
+# without keys. Integration (redis-stack) and live (real keys) tests are excluded
+# by default; the 90% coverage gate is a regression guard over app/.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            app/requirements.txt
+            pyproject.toml
+      # Lint first — needs no project deps and catches the common failures in seconds.
+      - name: Ruff
+        run: |
+          pip install ruff
+          ruff check .
+      - name: Install backend + test deps (curated — what the unit suite imports)
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            fastapi pydantic-settings python-dotenv \
+            haystack-ai qdrant-client voyageai redis \
+            streamlit requests \
+            pytest pytest-asyncio pytest-cov httpx asgi-lifespan fakeredis
+      - name: Unit tests (hermetic — integration/live/visual excluded by default)
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=90

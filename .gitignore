@@ -1,0 +1,55 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.local
+!.env.example
+
+# Packaging / build
+build/
+dist/
+.eggs/
+*.egg-info/
+*.egg
+wheels/
+
+# Test / coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.pytest_cache/
+.tox/
+.nox/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+
+# Logs / caches
+logs/
+*.log
+.cache/
+
+# OS / Editor
+*.DS_Store
+.idea/
+.vscode/
+.history/
+.python-version
+
+# Runtime-only dogfood log (local usage capture; harvested into evaluations/dogfood_log.md)
+dogfood/
+
+# Secrets
+**/.streamlit/secrets.toml
+secrets.toml

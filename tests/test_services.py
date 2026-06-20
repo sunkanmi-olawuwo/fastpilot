@@ -13,6 +13,7 @@ import types
 from types import SimpleNamespace
 
 import numpy as np
+
 from tests.conftest import FakeChatGenerator
 
 
@@ -56,8 +57,9 @@ async def test_router_defaults_on_bad_json():
 
 
 def test_router_build_prompt_formats_citations():
-    from app.services.query_router import QueryRouter
     from haystack import Document
+
+    from app.services.query_router import QueryRouter
 
     router = QueryRouter(llm=FakeChatGenerator())
     contexts = [Document(content="OAuth2PasswordBearer ...", meta={"file_path": "a.md", "category": "docs"})]
@@ -70,6 +72,7 @@ def test_router_build_prompt_formats_citations():
 # --- Conversation (fakeredis) ---------------------------------------------
 def _conv(rewriter=None):
     import fakeredis
+
     from app.services.conversation import ConversationService
 
     return ConversationService(
@@ -255,6 +258,7 @@ def test_cache_get_stats_reports_hit_rate_and_count():
 
 def test_create_cache_index_creates_when_absent():
     import redis as _redis
+
     from app.services.semantic_cache import INDEX_NAME, create_cache_index
 
     created = {}
@@ -293,6 +297,7 @@ def test_create_cache_index_idempotent_when_present():
 def test_create_cache_index_reraises_unexpected_response_error():
     import pytest
     import redis as _redis
+
     from app.services.semantic_cache import create_cache_index
 
     class _Ft:
@@ -369,6 +374,7 @@ async def test_rewrite_falls_back_to_original_on_rewriter_error():
 
 async def test_rewrite_passes_through_without_rewriter():
     import fakeredis
+
     from app.services.conversation import ConversationService
 
     conv = ConversationService(redis_client=fakeredis.FakeRedis(decode_responses=True))
@@ -550,6 +556,7 @@ def test_cache_is_healthy_false_when_ping_raises():
 # --- Conversation rewriter build + session-info degradation ----------------
 def test_conversation_builds_rewriter_from_key(monkeypatch):
     import fakeredis
+
     from app.services.conversation import ConversationService
 
     _install_fake_genai(monkeypatch, lambda model: SimpleNamespace(model=model))
@@ -562,6 +569,7 @@ def test_conversation_builds_rewriter_from_key(monkeypatch):
 
 def test_conversation_rewriter_build_failure_degrades(monkeypatch):
     import fakeredis
+
     from app.services.conversation import ConversationService
 
     def _boom(model):

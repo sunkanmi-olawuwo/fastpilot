@@ -18,15 +18,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# final-submission/app/config.py -> app -> final-submission -> repo root
+# app/config.py -> app -> repo root
 _APP_DIR = Path(__file__).resolve().parent
-_SUBMISSION_DIR = _APP_DIR.parent
-_REPO_ROOT = _SUBMISSION_DIR.parent
+_REPO_ROOT = _APP_DIR.parent
 
-# Repo-root .env carries the shared dev keys (Qdrant/Google/Voyage…); a
-# final-submission/.env (if present) overrides. Both are optional — missing
-# files are ignored and os.environ wins (Railway).
-_ENV_FILES = (_REPO_ROOT / ".env", _SUBMISSION_DIR / ".env")
+# The repo-root .env carries the dev keys (Qdrant/Google/Voyage…). Optional —
+# a missing file is ignored and os.environ wins (Railway sets vars directly).
+_ENV_FILES = (_REPO_ROOT / ".env",)
 
 
 class Settings(BaseSettings):

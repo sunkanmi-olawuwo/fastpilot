@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-_SUBMISSION_DIR = Path(__file__).resolve().parent.parent
-_REPO_ROOT = _SUBMISSION_DIR.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_SUBMISSION_DIR = _REPO_ROOT
 
 
 def test_config_defaults_are_plan_values(monkeypatch: pytest.MonkeyPatch) -> None:

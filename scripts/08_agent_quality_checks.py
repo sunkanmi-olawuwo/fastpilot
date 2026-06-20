@@ -16,7 +16,7 @@ Needs live creds. Writes evaluations/eval_results/agent_quality.json; exits non-
 either gate fails.
 
 Usage (from repo root):
-    uv run python final-submission/scripts/08_agent_quality_checks.py
+    uv run python scripts/08_agent_quality_checks.py
 """
 
 from __future__ import annotations
