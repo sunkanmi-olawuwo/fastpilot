@@ -35,6 +35,9 @@ coverage.xml
 .mypy_cache/
 .ruff_cache/
 
+# Generated visual-test screenshots (the README copies live in docs/screenshots/)
+tests/visual/artifacts/
+
 # Logs / caches
 logs/
 *.log

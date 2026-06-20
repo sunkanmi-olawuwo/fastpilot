@@ -5,6 +5,19 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-20 — Sidebar expanded by default + better screenshots
+
+- **Frontend:** `initial_sidebar_state` flipped `collapsed → expanded` (`frontend/app.py`) so the
+  Chat/Agent/Playground mode switcher + controls are visible on load.
+- **Screenshots regenerated** via the `visual` suite and promoted to `docs/screenshots/` (used by
+  `README.md`): the agent shot now shows the **populated, syntax-highlighted attempt-2 code** and the
+  Playground shows the **fully-painted Monaco editor** (previously blank / "Loading…"), all with the
+  expanded sidebar.
+- **`tests/test_visual.py`:** waits added so captures fire after the agent's static re-render
+  (Send-to-Playground button + code visible) and after Monaco paints (`_wait_monaco`); `_switch_mode`
+  tolerates the now-expanded sidebar; mobile overflow tests `_collapse_sidebar` first (the expanded
+  sidebar overlays the chips at 390px). 12 visual + 208 hermetic tests green.
+
 ## 2026-06-20 — GitHub Wiki published + CI auto-publish
 
 - Published `wiki/` to the **GitHub Wiki** via `scripts/publish_wiki.py` (in-repo `wiki/`

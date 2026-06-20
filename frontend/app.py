@@ -309,7 +309,7 @@ def _welcome() -> None:
 
 # --- Main -----------------------------------------------------------------
 def main() -> None:
-    st.set_page_config(page_title="FastPilot", page_icon="⚡", layout="centered", initial_sidebar_state="collapsed")
+    st.set_page_config(page_title="FastPilot", page_icon="⚡", layout="centered", initial_sidebar_state="expanded")
     _init_state()
     styles.inject_css(st, st.session_state.theme)
     # Apply a requested mode switch BEFORE the sidebar radio (key="mode") is built —

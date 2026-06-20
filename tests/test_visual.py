@@ -112,6 +112,36 @@ def _open(browser, width: int, theme: str):  # noqa: ANN001
     return ctx.new_page()
 
 
+def _collapse_sidebar(page) -> None:  # noqa: ANN001
+    """Collapse the (expanded-by-default) sidebar so it stops overlaying the main content
+    on a narrow viewport — the realistic mobile flow (tap to close), and what lets the
+    content-overflow checks click the welcome chips. Waits for the collapse button to paint
+    (it isn't in the DOM at first load) before clicking; best-effort so it never raises."""
+    btn = page.locator('[data-testid="stSidebarCollapseButton"]').first
+    try:
+        btn.wait_for(state="visible", timeout=8000)
+        btn.click()
+        page.locator('[data-testid="stSidebar"][aria-expanded="false"]').wait_for(timeout=5000)
+        page.wait_for_timeout(400)  # let it finish sliding out
+    except Exception:  # noqa: BLE001 - collapsing is a convenience, not an assertion
+        pass
+
+
+def _wait_monaco(page, timeout_ms: int = 9000) -> None:  # noqa: ANN001
+    """Best-effort wait for the Monaco editor (in its component iframe) to paint its code
+    lines, so a Playground screenshot captures the editor and not the "Loading…" spinner.
+    Monaco loads asynchronously and may fall back to a plain text area — so this never
+    raises: if the editor doesn't appear, we wait out a short grace period and proceed."""
+    for sel in ('iframe[title*="monaco" i]', 'iframe[title*="st_monaco" i]'):
+        try:
+            page.frame_locator(sel).locator(".view-line").first.wait_for(state="visible", timeout=timeout_ms)
+            page.wait_for_timeout(700)  # let syntax highlighting settle
+            return
+        except Exception:  # noqa: BLE001 - Monaco is a nicety, not an assertion
+            continue
+    page.wait_for_timeout(2000)
+
+
 @pytest.mark.parametrize("width,theme", [(1280, "light"), (390, "light"), (1280, "dark"), (390, "dark")])
 def test_welcome_renders(ui_server, browser, width, theme):
     from playwright.sync_api import expect
@@ -184,28 +214,32 @@ def test_agent_flow_shows_self_correction(ui_server, browser):
     page.get_by_text("Write & run a sample endpoint").click()
     # The fix-then-pass run ends on exit 0 in the terminal block.
     expect(page.get_by_text("exit 0", exact=False).first).to_be_visible(timeout=40_000)
+    # Wait for the completed static re-render (the "Send to Playground" button only
+    # appears in _render_run) so the attempt-2 code block is populated, not mid-stream blank.
+    expect(page.get_by_role("button", name="Send to Playground")).to_be_visible(timeout=20_000)
+    expect(page.get_by_text("class User", exact=False).first).to_be_visible(timeout=10_000)
     page.screenshot(path=str(_ARTIFACTS / "agent_1280_dark.png"), full_page=True)
     page.close()
 
 
 def _switch_mode(page, label: str) -> None:
-    """Open the (collapsed) sidebar and pick a mode radio option by its label text.
+    """Pick a mode radio option by its label text, expanding the sidebar first if needed.
 
-    The sidebar starts collapsed (``initial_sidebar_state="collapsed"``), so the radio
-    labels sit off-screen (x≈-280) until expanded. Open it first via the expand button
-    (testid varies by Streamlit version — try the known ones), then click the wrapping
-    ``<label>`` (the real hit target; the inner ``<p>`` reports as outside the viewport)."""
+    The sidebar now defaults to expanded (``initial_sidebar_state="expanded"``), so the
+    radio labels are usually on-screen already. But on a narrow viewport Streamlit may
+    still collapse it — so if a (visible) expand control is present, click it first. Then
+    click the wrapping ``<label>`` (the real hit target; the inner ``<p>`` reports as
+    outside the viewport)."""
     for sel in (
         '[data-testid="stExpandSidebarButton"]',
         '[data-testid="stSidebarCollapsedControl"]',
         '[data-testid="collapsedControl"]',
     ):
         opener = page.locator(sel)
-        if opener.count():
-            opener.first.wait_for(state="visible", timeout=10_000)
+        if opener.count() and opener.first.is_visible():
             opener.first.click()
+            page.wait_for_timeout(700)  # let the sidebar slide in
             break
-    page.wait_for_timeout(700)  # let the sidebar slide in
     option = page.locator("label").filter(has_text=label).first
     option.wait_for(state="visible", timeout=10_000)
     option.scroll_into_view_if_needed()
@@ -225,9 +259,13 @@ def test_playground_runs_and_shows_terminal(ui_server, browser):
     expect(page.get_by_text("Learn FastAPI by building.")).to_be_visible(timeout=25_000)  # app fully rendered first
     _switch_mode(page, "Playground — practice")
     expect(page.get_by_text("FastPilot · Playground", exact=False).first).to_be_visible(timeout=25_000)
+    # The Monaco editor renders in an iframe and shows "Loading…" until it paints — wait for
+    # the iframe's code lines so the screenshot captures the populated editor, not the spinner.
+    _wait_monaco(page)
     page.get_by_role("button", name="▶ Run").click()
     # Stub /execute returns "valid: 200 / invalid: 422" — the terminal block must show it.
     expect(page.get_by_text("invalid: 422", exact=False).first).to_be_visible(timeout=20_000)
+    page.wait_for_timeout(400)  # let the terminal block settle
     page.screenshot(path=str(_ARTIFACTS / "playground_1280_light.png"), full_page=True)
     scroll_w = page.evaluate("document.documentElement.scrollWidth")
     assert scroll_w <= 1282, f"horizontal overflow: scrollWidth={scroll_w}"
@@ -243,6 +281,7 @@ def test_mobile_chat_answer_no_overflow(ui_server, browser):
     _ARTIFACTS.mkdir(exist_ok=True)
     page = _open(browser, 390, "light")
     page.goto(ui_server, wait_until="domcontentloaded")
+    _collapse_sidebar(page)  # sidebar defaults expanded; on mobile it overlays the chips
     page.get_by_text("Add JWT auth").click()
     expect(page.get_by_text("OAuth2PasswordBearer", exact=False).first).to_be_visible(timeout=30_000)
     page.screenshot(path=str(_ARTIFACTS / "chat_390_light.png"), full_page=True)
@@ -260,10 +299,12 @@ def test_mobile_agent_timeline_no_overflow(ui_server, browser):
     _ARTIFACTS.mkdir(exist_ok=True)
     page = _open(browser, 390, "dark")
     page.goto(ui_server, wait_until="domcontentloaded")
+    _collapse_sidebar(page)  # sidebar defaults expanded; on mobile it overlays the chips
     page.get_by_text("Write & run a sample endpoint").click()
     # Run to completion (✗ attempt 1 → ✓ attempt 2) so the full timeline + both code
     # blocks + terminal are on screen when we measure.
     expect(page.get_by_text("exit 0", exact=False).first).to_be_visible(timeout=40_000)
+    expect(page.get_by_role("button", name="Send to Playground")).to_be_visible(timeout=20_000)
     page.screenshot(path=str(_ARTIFACTS / "agent_390_dark.png"), full_page=True)
     scroll_w = page.evaluate("document.documentElement.scrollWidth")
     assert scroll_w <= 392, f"horizontal overflow at 390px: scrollWidth={scroll_w}"
