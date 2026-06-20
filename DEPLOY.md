@@ -40,7 +40,8 @@ a broken build must never reach production:
    - **backend** — Settings → **Root Directory = `app`**. Railway finds
      `app/railway.toml` + `app/Dockerfile`. Healthcheck `/health` is already configured.
    - **frontend** — Settings → **Root Directory = `frontend`**.
-3. **Env vars** (Railway dashboard → each service → Variables; never in the repo):
+3. **Env vars** (Railway dashboard → each service → Variables; never in the repo). Use the **same
+   values as your local `.env`** — copy them straight across:
    - **backend:** `QDRANT_URL`, `QDRANT_API_KEY`, `GOOGLE_API_KEY`, `VOYAGE_API_KEY`,
      `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_SSL=true`, `QDRANT_COLLECTION=rag_accelerator_capstone_final`,
      `CACHE_DISTANCE_THRESHOLD=0.16`, `OPIK_API_KEY`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME=fastpilot`.
@@ -50,6 +51,8 @@ a broken build must never reach production:
    Leave the backend with **no** public domain — it's reachable only at `backend.railway.internal`.
 5. `$PORT` is handled — both Dockerfiles bind Railway's injected `$PORT`
    (`uvicorn … --port $PORT` / `streamlit … --server.port $PORT`).
+6. **Gate on CI:** in each service → Settings → enable **"Wait for CI"** so a deploy only runs after
+   `ci.yml` passes on that commit (see [Deploy gating](#deploy-gating-chosen-policy) above).
 
 ## Verify before recording the demo
 
