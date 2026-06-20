@@ -599,6 +599,9 @@ def create_app() -> FastAPI:
             except Exception as exc:  # noqa: BLE001
                 logger.exception("Agent run failed")
                 yield _sse("error", {"error": str(exc) if settings.debug else "Agent run failed"})
+                # Always close the stream with a terminal `done` so a client waiting on it
+                # (the UI spinner) fails cleanly instead of hanging until timeout.
+                yield _sse("done", {"success": False, "error": True, "msg_id": msg_id, "session_id": session_id})
                 return
             dogfood.log_interaction(
                 session_id=session_id,

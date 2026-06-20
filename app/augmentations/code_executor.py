@@ -66,6 +66,13 @@ _DENIED_CALL_PATHS = {
     "shutil.move",
     "importlib.import_module",
 }
+# A denied `module.member` call (e.g. os.system) is only caught as a *dotted* call. But
+# `from os import system` rebinds it to a bare name the call-path scan never matches, so the
+# import itself must be rejected. Derived from _DENIED_CALL_PATHS so the two can't drift.
+_DENIED_FROM_MEMBERS: dict[str, set[str]] = {
+    mod: {p.split(".", 1)[1] for p in _DENIED_CALL_PATHS if p.startswith(mod + ".")}
+    for mod in {p.split(".", 1)[0] for p in _DENIED_CALL_PATHS if "." in p}
+}
 # eval/exec/compile/__import__ run arbitrary code; getattr/setattr/vars/globals/locals are the
 # reflection primitives that reach denied objects by *string*, sidestepping the name-based scan;
 # open is direct filesystem access. None have a legitimate use in a self-contained FastAPI example.
@@ -107,8 +114,13 @@ def scan_code(code: str) -> tuple[bool, str | None]:
                 if alias.name.split(".")[0] in _DENIED_IMPORTS:
                     return False, f"import of '{alias.name}' is not allowed in the sandbox"
         elif isinstance(node, ast.ImportFrom):
-            if (node.module or "").split(".")[0] in _DENIED_IMPORTS:
+            mod = node.module or ""
+            if mod.split(".")[0] in _DENIED_IMPORTS:
                 return False, f"import from '{node.module}' is not allowed in the sandbox"
+            denied_members = _DENIED_FROM_MEMBERS.get(mod, set())
+            for alias in node.names:
+                if alias.name in denied_members or (mod == "os" and alias.name.startswith("exec")):
+                    return False, f"import of '{mod}.{alias.name}' is not allowed in the sandbox"
         elif isinstance(node, ast.Call):
             name = _dotted(node.func)
             if name and (name in _DENIED_CALL_PATHS or (name.startswith("os.exec"))):

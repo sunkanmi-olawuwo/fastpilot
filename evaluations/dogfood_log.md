@@ -5,8 +5,9 @@
 > curated distillation, produced by "harvest the dogfood log".
 
 ## Harvest — Phase 1–4 (2026-06-11 → 06-12)
-23 interactions + 2 feedback events logged to `dogfood/sessions.jsonl`. The most
-instructive real-usage exchanges (the rest are Phase-4 parity-eval golden traffic):
+The repo-root `dogfood/sessions.jsonl` has auto-logged **102 interactions + 3 feedback events**
+across dev, eval, and dogfood traffic; this section curates the most instructive *real-usage*
+exchanges (the rest are Phase-4 parity-eval golden traffic):
 
 | Date | Question | Mode | Quality (1–5) | Note |
 |------|----------|------|---------------|------|
@@ -18,7 +19,9 @@ instructive real-usage exchanges (the rest are Phase-4 parity-eval golden traffi
 | 06-11 | How do I return a custom status code? | chat | 5 | 5k chars, thorough. |
 | 06-12 | (12 golden questions, parity eval) | chat | n/a (scored live) | See `eval_results/production_parity.json` — faithfulness 0.992 / coverage 0.941. |
 
-**Feedback:** 2 thumbs-up recorded (`msg_c9dc9c9f…`, `msg_053c4a8c…`), 0 thumbs-down.
+**Feedback:** 3 feedback events captured (`msg_c9dc9c9f…`, `msg_053c4a8c…`, `msg_e275eee5a4e0`).
+The local JSONL records the event + `msg_id`; the thumbs polarity itself is sent to Opik via
+`log_feedback_score` (joined by `msg_id`), not persisted in this file.
 
 ## Findings
 - **The mechanism works end-to-end** — exchanges auto-append to the repo-root JSONL

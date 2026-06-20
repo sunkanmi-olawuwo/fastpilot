@@ -119,6 +119,29 @@ def test_scan_rejects_os_exec_family():
     assert "os.exec" in reason
 
 
+@pytest.mark.parametrize(
+    "code,needle",
+    [
+        # `from os import system` rebinds the call to a bare name, sidestepping the dotted
+        # os.system path scan — the import itself must be rejected. (Regression: this bypass
+        # previously passed the scan.)
+        ("from os import system\nsystem('id')\n", "os.system"),
+        ("from os import system as s\ns('id')\n", "os.system"),
+        ("from os import popen\npopen('id')\n", "os.popen"),
+        ("from os import execv\n", "os.execv"),
+    ],
+)
+def test_scan_rejects_denied_member_from_import(code, needle):
+    ok, reason = scan_code(code)
+    assert ok is False
+    assert needle in reason
+
+
+def test_scan_allows_benign_os_member_import():
+    ok, reason = scan_code("from os import getcwd\nprint(getcwd())\n")
+    assert ok and reason is None
+
+
 # --- runtime limits + output handling -------------------------------------
 def test_wall_timeout_kills_sleeping_process():
     # time.sleep burns no CPU, so only the wall-clock timer can stop it.
