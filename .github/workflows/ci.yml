@@ -37,3 +37,26 @@ jobs:
             pytest pytest-asyncio pytest-cov httpx asgi-lifespan fakeredis
       - name: Unit tests (hermetic — integration/live/visual excluded by default)
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=90
+
+  # Mirror the in-repo wiki/ to the GitHub Wiki after tests pass. Push-to-main only
+  # (PRs — incl. forks — can't get a write token), and only if tests are green.
+  # publish_wiki.py is pure stdlib (no deps) and idempotent: it no-ops when unchanged.
+  publish-wiki:
+    needs: lint-and-unit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to push to the repo's .wiki.git
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure git auth for the wiki push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The script clones .wiki.git into a temp dir, so the checkout's repo-local
+          # credentials don't apply — inject the token globally for github.com.
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish wiki
+        run: python scripts/publish_wiki.py
