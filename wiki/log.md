@@ -5,6 +5,16 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-21 — Frontend accepts `BACKEND_URL` as an `API_BASE_URL` alias
+
+While deploying to Railway, the frontend couldn't reach the backend: the env var was set as
+`BACKEND_URL`, but `frontend/api_client.py` only read `API_BASE_URL` (falling back to
+`http://localhost:8000` — the frontend container itself).
+- `frontend/api_client.py` now resolves the base URL as
+  `API_BASE_URL` → `BACKEND_URL` → `http://localhost:8000`, using `or` so empty values fall
+  through (matches the secrets-default-to-empty / degrade-don't-crash convention).
+- `DEPLOY.md` notes the alias under the frontend env vars.
+
 ## 2026-06-20 — Wiki embeds design conclusions (links out, no file moves)
 
 Decided to keep `docs/` (deep design essays, code-coupled) and `wiki/` (the living map) as two

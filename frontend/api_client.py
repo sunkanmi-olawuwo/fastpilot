@@ -16,7 +16,8 @@ from collections.abc import Iterable, Iterator
 
 import requests
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+# Accept BACKEND_URL as an alias for API_BASE_URL (e.g. Railway env var naming).
+API_BASE_URL = os.environ.get("API_BASE_URL") or os.environ.get("BACKEND_URL") or "http://localhost:8000"
 
 # Event names the backend emits (for reference / validation in the UI).
 KNOWN_EVENTS = {"session", "rewrite", "cache_status", "classification", "context", "token", "done", "error"}
