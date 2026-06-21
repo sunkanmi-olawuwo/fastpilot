@@ -47,6 +47,8 @@ a broken build must never reach production:
      `CACHE_DISTANCE_THRESHOLD=0.16`, `OPIK_API_KEY`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME=fastpilot`.
    - **frontend:** `API_BASE_URL=http://backend.railway.internal:${{backend.PORT}}`
      (Railway's cross-service reference — resolves to the backend's injected port over the private network).
+     `BACKEND_URL` is accepted as an alias if `API_BASE_URL` is unset; set the full base URL
+     (scheme, no trailing slash). The client appends `/query`, `/health`, etc.
 4. **Public domain:** Settings → Networking → **Generate Domain on the `frontend` service ONLY**.
    Leave the backend with **no** public domain — it's reachable only at `backend.railway.internal`.
 5. `$PORT` is handled — both Dockerfiles bind Railway's injected `$PORT`
