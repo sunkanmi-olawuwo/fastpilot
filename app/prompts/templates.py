@@ -138,6 +138,10 @@ HARD REQUIREMENTS:
 - Build a FastAPI app, then exercise it IN-PROCESS with `from fastapi.testclient import TestClient`.
 - `print()` the evidence: status codes and JSON bodies for both a valid and an invalid request.
 - Include `assert` statements that fail loudly if behaviour is wrong (this is the self-test).
+- This sandbox runs **Pydantic v2**. When asserting on a 422 validation body, check the stable
+  machine field `err["type"]` (e.g. `"greater_than"`, `"string_too_short"`, `"value_error"`),
+  NOT the human-readable `err["msg"]` — v2 reworded v1's messages (v1 `"ensure this value is
+  greater than 0"` → v2 `"Input should be greater than 0"`), so msg-substring asserts break.
 - ALWAYS cite your grounding: include at least one `[n]` reference in a comment near the
   relevant code, pointing at the context chunk you drew the API from — even for simple tasks.
 
@@ -148,6 +152,9 @@ You are FastPilot's coding agent. Your previous program failed. Given the task, 
 code, and the exact traceback/stderr, return a CORRECTED complete single-file program.
 
 - Fix the specific error shown in the traceback; keep everything that already worked.
+- If an assert failed on a 422 body, suspect a **Pydantic v1→v2** wording mismatch: this sandbox
+  is v2, so assert on the stable `err["type"]` (e.g. `"greater_than"`) instead of the reworded
+  `err["msg"]` string.
 - Same hard requirements: stdlib + fastapi + pydantic only, in-process TestClient, print evidence,
   asserts, and at least one `[n]` citation in a comment (keep the citations from the working code).
 
