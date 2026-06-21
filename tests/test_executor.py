@@ -40,6 +40,13 @@ def test_happy_path_testclient():
     assert result.exit_code == 0
 
 
+def test_testclient_import_warning_suppressed():
+    """Starlette's httpx-deprecation warning must not pollute learner-facing stderr."""
+    result = EXEC.run(HAPPY)
+    assert "StarletteDeprecationWarning" not in result.stderr
+    assert result.stderr.strip() == ""
+
+
 def test_stderr_and_nonzero_exit_captured():
     result = EXEC.run("import sys\nprint('to err', file=sys.stderr)\nraise ValueError('boom')\n")
     assert not result.ok

@@ -157,6 +157,15 @@ def _is_secret_key(key: str) -> bool:
     return any(tok in upper for tok in ("KEY", "TOKEN", "SECRET", "PASSWORD", "QDRANT", "REDIS", "OPIK"))
 
 
+# Starlette 1.3+ prefers an `httpx2` package and warns at TestClient import when only
+# `httpx` is present. The warning is cosmetic but lands in every sandbox run's stderr,
+# which the Agent and Playground surface to learners — silence it via a `-W` filter on the
+# argv below. We match on the message, not the category: a category filter needs the class
+# imported at startup (before starlette is loaded) and PYTHONWARNINGS is ignored anyway under
+# the `-I` isolated flag, whereas `-W` command-line options are honoured even in isolated mode.
+_SUPPRESS_WARNING = "ignore:Using `httpx` with `starlette.testclient`"
+
+
 def _scrubbed_env() -> dict[str, str]:
     """Pass through a minimal env with all credential-shaped vars removed."""
     return {k: v for k, v in os.environ.items() if not _is_secret_key(k)}
@@ -205,7 +214,7 @@ class SubprocessExecutor:
             (Path(tmp) / "main.py").write_text(_NET_PRELUDE + "\n" + code, encoding="utf-8")
             start = time.monotonic()
             proc = subprocess.Popen(
-                [sys.executable, "-I", "main.py"],
+                [sys.executable, "-I", "-W", _SUPPRESS_WARNING, "main.py"],
                 cwd=tmp,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
