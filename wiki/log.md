@@ -5,6 +5,17 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-21 — Sandbox suppresses Starlette's httpx-deprecation warning
+
+Starlette 1.3+ emits a `StarletteDeprecationWarning` at `TestClient` import (it prefers an
+`httpx2` package). Cosmetic, but it landed in every sandbox run's stderr — which the Agent and
+Playground surface to learners.
+- `app/augmentations/code_executor.py`: added a `-W` message filter to the sandbox argv. It must
+  be `-W`, not `PYTHONWARNINGS`: the executor runs `python -I` (isolated mode), which ignores
+  `PYTHON*` env vars, and a category filter can't import the starlette class at interpreter
+  startup — so the filter matches on the message text.
+- Regression test in `tests/test_executor.py` asserts the sandbox stderr stays clean.
+
 ## 2026-06-21 — Agent asserts on Pydantic v2 error `type`, not v1 `msg`
 
 Prod symptom: the Agent's generated self-tests asserted on Pydantic **v1** error wording
