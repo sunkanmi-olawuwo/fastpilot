@@ -5,6 +5,17 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-21 — Agent asserts on Pydantic v2 error `type`, not v1 `msg`
+
+Prod symptom: the Agent's generated self-tests asserted on Pydantic **v1** error wording
+(`"ensure this value is greater than 0"`), which never matches the **v2** sandbox
+(`"Input should be greater than 0"`). The program failed its own `assert`, the ≤2-attempt
+fix loop ([[component-architecture]]) couldn't recover, and the run surfaced as a failure.
+- `app/prompts/templates.py`: `AGENT_CODE_PROMPT` now tells the agent the sandbox is Pydantic v2
+  and to assert on the stable `err["type"]` (`greater_than`, `string_too_short`, `value_error`)
+  rather than the reworded `err["msg"]`. `AGENT_FIX_PROMPT` gains a v1→v2 hint so the fix loop
+  can repair a msg-substring assert if one slips through.
+
 ## 2026-06-21 — Frontend accepts `BACKEND_URL` as an `API_BASE_URL` alias
 
 While deploying to Railway, the frontend couldn't reach the backend: the env var was set as
