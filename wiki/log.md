@@ -5,6 +5,28 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-21 — Sandbox suppresses Starlette's httpx-deprecation warning
+
+Starlette 1.3+ emits a `StarletteDeprecationWarning` at `TestClient` import (it prefers an
+`httpx2` package). Cosmetic, but it landed in every sandbox run's stderr — which the Agent and
+Playground surface to learners.
+- `app/augmentations/code_executor.py`: added a `-W` message filter to the sandbox argv. It must
+  be `-W`, not `PYTHONWARNINGS`: the executor runs `python -I` (isolated mode), which ignores
+  `PYTHON*` env vars, and a category filter can't import the starlette class at interpreter
+  startup — so the filter matches on the message text.
+- Regression test in `tests/test_executor.py` asserts the sandbox stderr stays clean.
+
+## 2026-06-21 — Agent asserts on Pydantic v2 error `type`, not v1 `msg`
+
+Prod symptom: the Agent's generated self-tests asserted on Pydantic **v1** error wording
+(`"ensure this value is greater than 0"`), which never matches the **v2** sandbox
+(`"Input should be greater than 0"`). The program failed its own `assert`, the ≤2-attempt
+fix loop ([[component-architecture]]) couldn't recover, and the run surfaced as a failure.
+- `app/prompts/templates.py`: `AGENT_CODE_PROMPT` now tells the agent the sandbox is Pydantic v2
+  and to assert on the stable `err["type"]` (`greater_than`, `string_too_short`, `value_error`)
+  rather than the reworded `err["msg"]`. `AGENT_FIX_PROMPT` gains a v1→v2 hint so the fix loop
+  can repair a msg-substring assert if one slips through.
+
 ## 2026-06-21 — Frontend accepts `BACKEND_URL` as an `API_BASE_URL` alias
 
 While deploying to Railway, the frontend couldn't reach the backend: the env var was set as
