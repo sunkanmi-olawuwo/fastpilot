@@ -180,8 +180,6 @@ def _render_assistant(msg: dict, idx: int) -> None:
     cap = []
     if isinstance(meta.get("latency_ms"), (int, float)):
         cap.append(f"{meta['latency_ms'] / 1000:.1f}s")
-    if isinstance(meta.get("cost_usd"), (int, float)) and meta["cost_usd"] > 0:
-        cap.append(f"${meta['cost_usd']:.4f}")
     if msg.get("contexts"):
         cap.append(f"{len(msg['contexts'])} sources")
     if cap:
