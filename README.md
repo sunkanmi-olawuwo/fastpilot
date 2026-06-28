@@ -10,7 +10,7 @@ A production **RAG** system that closes the loop from reading to running:
 [![CI](https://github.com/sunkanmi-olawuwo/fastpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/sunkanmi-olawuwo/fastpilot/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11–3.13-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-210%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-213%20passing-brightgreen)
 ![Coverage gate](https://img.shields.io/badge/coverage-≥90%25-brightgreen)
 
 **[▶ Live demo](https://frontend-production-3afb.up.railway.app/)** · **[Video walkthrough](https://www.loom.com/share/a1d6bf3ee7c54e5c93de4ac8c280992f)** · **[Docs & architecture](https://github.com/sunkanmi-olawuwo/fastpilot/wiki)**
