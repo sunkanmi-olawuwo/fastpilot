@@ -13,15 +13,14 @@ A production **RAG** system that closes the loop from reading to running:
 ![Tests](https://img.shields.io/badge/tests-210%20passing-brightgreen)
 ![Coverage gate](https://img.shields.io/badge/coverage-≥90%25-brightgreen)
 
-<!-- ▶ LIVE DEMO: paste the public Railway URL here once deployed (see DEPLOY.md) -->
-**[▶ Live demo](#)** · **[2-min walkthrough](#)** · **[Docs & architecture](https://github.com/sunkanmi-olawuwo/fastpilot/wiki)**
+**[▶ Live demo](https://frontend-production-3afb.up.railway.app/)** · **[Video walkthrough](https://www.loom.com/share/a1d6bf3ee7c54e5c93de4ac8c280992f)** · **[Docs & architecture](https://github.com/sunkanmi-olawuwo/fastpilot/wiki)**
 
 <img src="docs/screenshots/01-welcome.png" alt="FastPilot welcome screen" width="780">
 
 </div>
 
-> **Note** — the live-demo and video links above are placeholders until the app is deployed
-> (one-time Railway setup in [`DEPLOY.md`](DEPLOY.md)). The screenshots below are real renders of the UI.
+> **Live** on Railway — try the [demo](https://frontend-production-3afb.up.railway.app/) (it may take a few
+> seconds to wake from idle). The screenshots below are real renders of the UI.
 
 ---
 
