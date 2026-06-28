@@ -105,12 +105,14 @@ def _render_sources(contexts: list[dict]) -> None:
     with st.expander(f"Sources ({len(contexts)})"):
         for ctx in contexts:
             meta = ctx.get("metadata", {})
-            path = styles.source_label(meta)
+            title = meta.get("title") or styles.source_label(meta)
+            url = meta.get("url")
+            label = f'<a href="{url}" target="_blank" class="fp-src-link">{title}</a>' if url else title
             ctype = meta.get("category", meta.get("file_type", "source"))
             score = ctx.get("score")
             score_txt = f" · {score:.2f}" if isinstance(score, (int, float)) else ""
             st.markdown(
-                f'<span class="fp-src-path">[{ctx.get("rank", "?")}] {path}</span> '
+                f'<span class="fp-src-path">[{ctx.get("rank", "?")}] {label}</span> '
                 f'<span class="fp-src-type">{ctype}</span>{score_txt}',
                 unsafe_allow_html=True,
             )
@@ -166,12 +168,14 @@ def _render_assistant(msg: dict, idx: int) -> None:
     )
     if badges:
         st.markdown(badges, unsafe_allow_html=True)
-    note = styles.rewrite_note_html(meta.get("standalone_query"))
-    if note:
-        st.markdown(note, unsafe_allow_html=True)
     if meta.get("low_confidence"):
         st.markdown(styles.low_confidence_note_html(), unsafe_allow_html=True)
     st.markdown(styles.render_answer(msg["content"]), unsafe_allow_html=True)
+    # The rewritten ("searched as") query sits just above the sources so the user can
+    # see exactly what was retrieved against.
+    note = styles.rewrite_note_html(meta.get("standalone_query"))
+    if note:
+        st.markdown(note, unsafe_allow_html=True)
     _render_sources(msg.get("contexts", []))
     cap = []
     if isinstance(meta.get("latency_ms"), (int, float)):
@@ -198,11 +202,11 @@ def _render_history() -> None:
 def _stream_answer(prompt: str) -> dict:
     """Stream the assistant answer into placeholders; return the message dict."""
     badge_ph = st.empty()
-    note_ph = st.empty()
     lowconf_ph = st.empty()
     answer_ph = st.empty()
     buffer, contexts, meta = "", [], {}
     rewritten = cache_hit = False
+    standalone_text = ""
     qtype = None
     try:
         stream = (
@@ -215,7 +219,7 @@ def _stream_answer(prompt: str) -> dict:
                 st.session_state.session_id = data.get("session_id", st.session_state.session_id)
             elif event == "rewrite":
                 rewritten = True
-                note_ph.markdown(styles.rewrite_note_html(data.get("standalone")), unsafe_allow_html=True)
+                standalone_text = data.get("standalone", "") or ""
             elif event == "cache_status":
                 cache_hit = bool(data.get("cache_hit"))
             elif event == "classification":
@@ -243,6 +247,11 @@ def _stream_answer(prompt: str) -> dict:
     answer_ph.markdown(styles.render_answer(buffer), unsafe_allow_html=True)
     if meta.get("low_confidence"):
         lowconf_ph.markdown(styles.low_confidence_note_html(), unsafe_allow_html=True)
+    # Show the rewritten ("searched as") query just above the sources it was retrieved against.
+    standalone_query = standalone_text or meta.get("standalone_query")
+    note = styles.rewrite_note_html(standalone_query)
+    if note:
+        st.markdown(note, unsafe_allow_html=True)
     _render_sources(contexts)
     return {
         "role": "assistant",
@@ -253,6 +262,7 @@ def _stream_answer(prompt: str) -> dict:
             **meta,
             "rewritten": rewritten,
             "cache_hit": cache_hit,
+            "standalone_query": standalone_query,
             "query_type": qtype or meta.get("query_type"),
         },
     }

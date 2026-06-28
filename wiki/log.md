@@ -5,6 +5,48 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-06-28 — Demo polish: source titles/URLs, exec_result `ok`, reliable agent task
+
+End-to-end demo-path verification surfaced three rough edges; all fixed and re-verified live.
+- **Human-friendly sources.** `app/formatting.py` gains `source_title` + `source_url`, deriving
+  `Advanced › Security › OAuth2 Scopes` and `https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/`
+  from the raw `official_docs::…/index.md` / `github_issue::N` labels (acronym-aware: OAuth2/API/JWT).
+  `_format_contexts` ([app/main.py]) now emits `title` + `url` alongside `file_path`; the Chat and
+  Agent sources panels ([frontend/app.py], [frontend/agent_view.py]) render the title as a link.
+  All generated URLs verified `200`.
+- **`exec_result.ok`.** The agent SSE `exec_result` event now includes `ok` (mirrors
+  `ExecuteResult.ok`) so the UI doesn't re-derive success from `exit_code`
+  ([app/augmentations/agent_orchestrator.py]).
+- **Rewrite query shown above sources.** The "↻ searched as: <standalone>" caption moved from the
+  top of the answer to **just above the sources list** ([frontend/app.py]), so the user sees the
+  rewritten query right next to what it retrieved against. The standalone text is now captured from
+  the `rewrite` SSE event and persisted to message metadata (`standalone_query`), so it survives a
+  history re-render even when the `done` event omits it. (The "✎ rewritten" badge stays at the top.)
+- **Reliable demo task.** Empirically tested candidate Agent tasks against the real backend; the
+  *"POST /items … returns the created item with HTTP 201, self-test asserts 201"* task fails the
+  first attempt **6/7** runs (genuine AssertionError) and recovers **7/7** — so the fail→fix→exit-0
+  beat actually shows on camera. Swapped it into `video-transcript.md` + `DEPLOY.md` (the old 422
+  task succeeded first-try ~half the time; the password-confirm/EmailStr alternatives failed to
+  recover and would show an honest failure). See [[endpoint-summary]] for the updated schemas.
+
+## 2026-06-27 — Semantic cache fix: pin RESP2 so KNN lookups parse (was 0% hit rate)
+
+End-to-end check against the real services found the semantic cache **never returned a hit** — it
+connected, reported healthy, and *wrote* entries (`num_docs` climbed), but every `/query` came back
+`cache_hit: false`. Root cause: Redis Cloud is now **Redis 8.4 (RESP3 by default)**, and **redis-py
+8.0**'s `FT.SEARCH` result parser misreads the RESP3 response map when `decode_responses=False`
+(its keys arrive as `bytes`), silently reporting **0 results** for every KNN query. The cache uses
+`decode_responses=False` to read raw embedding bytes, so its lookup was permanently empty —
+a silent 0% hit rate that `ping`/`is_healthy()`/`/health` all reported green (same green-degradation
+class the DIM-mismatch guard already defends against).
+- `app/redis_client.py`: `make_redis_client` now pins `protocol=2` (RESP2). Verified: the *only*
+  variable — same index/data/query — `decode_responses=False` gives KNN `total 0` on RESP3 vs
+  `total 1` on RESP2.
+- Re-verified live after the fix: identical query → HIT `distance 0.0` in **722ms** (vs 7.7s miss),
+  a **reworded** query → HIT `distance 0.056` (< 0.16 threshold, proves *semantic* match), unrelated
+  query → correct MISS. `/metrics` hit-rate moved 0% → 50% across the 4-query probe.
+- See [[component-architecture]] → *Resilience* and [[overview]] (Memory + cache row).
+
 ## 2026-06-21 — Sandbox suppresses Starlette's httpx-deprecation warning
 
 Starlette 1.3+ emits a `StarletteDeprecationWarning` at `TestClient` import (it prefers an

@@ -87,6 +87,36 @@ def test_rewrite_caption_shows_standalone_query(monkeypatch):
     assert any("searched as" in str(m.value) and "integer" in str(m.value) for m in at.markdown)
 
 
+def _streamed_followup_with_sources(prompt, session_id, use_cache):
+    """A follow-up that also retrieves sources, so the 'searched as' note and the
+    Sources expander render together (the note sits just above the sources)."""
+    standalone = "Can a query parameter with a default value be an integer?"
+    yield "session", {"session_id": "s"}
+    yield "rewrite", {"original": prompt, "standalone": standalone}
+    yield "cache_status", {"cache_hit": False}
+    yield "classification", {"category": "FACTUAL"}
+    meta = {"title": "Tutorial › Query Params", "url": "https://fastapi.tiangolo.com/tutorial/query-params/"}
+    yield "context", {"rank": 1, "score": 0.9, "content": "...", "metadata": meta}
+    yield "token", {"token": "Yes [1]."}
+    yield "done", {"msg_id": "m", "latency_ms": 900.0, "query_type": "FACTUAL"}
+
+
+def test_rewrite_note_renders_above_sources(monkeypatch):
+    """The 'searched as' caption and the Sources expander both render; the caption is
+    persisted to metadata so it survives a history re-render even if `done` omits it."""
+    import api_client
+
+    monkeypatch.setattr(api_client, "stream_query", _streamed_followup_with_sources)
+    monkeypatch.setattr(api_client, "send_feedback", lambda *a, **k: True)
+    at = AppTest.from_file(_APP, default_timeout=30)
+    at.run()
+    at.chat_input[0].set_value("can it be an integer?").run()
+    # caption captured from the rewrite event (not the done event) and persisted:
+    assert at.session_state["messages"][1]["metadata"]["standalone_query"].startswith("Can a query parameter")
+    assert any("searched as" in str(m.value) for m in at.markdown)
+    assert any("Sources" in str(e.label) for e in at.expander)
+
+
 def _streamed_lowconf(prompt, session_id, use_cache):
     """An off-corpus query: the best reranked chunk scored below the floor, so `done`
     carries low_confidence (the rerank-confidence guard fired)."""

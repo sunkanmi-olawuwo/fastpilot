@@ -149,3 +149,11 @@ internally and never raises** at construction. The lifespan builds them all, and
 aggregates each component's `is_healthy()` into `healthy` / `degraded`. Blocking service I/O
 (Redis, Voyage embed) is offloaded with `asyncio.to_thread` so a slow dependency can't stall
 the event loop. See the request handlers in [[endpoint-summary]].
+
+> **Watch the silent-green failures.** The hardest cache bugs aren't crashes — they're a cache
+> that `ping`s fine, writes entries, and reports `is_healthy()` true while *every* lookup misses
+> (a 0% hit rate `/health` happily calls green). Two known instances: a stale index built at the
+> wrong vector DIM (guarded by the load-time warning in `semantic_cache.py`), and Redis 8.x
+> RESP3 + `decode_responses=False` breaking redis-py's `FT.SEARCH` parser — fixed by pinning
+> `protocol=2` in `app/redis_client.py` (see [[log]] 2026-06-27). When touching the cache, verify
+> a real hit end-to-end (`cache_hit: true` with a low `distance`), not just `/health`.

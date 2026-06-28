@@ -78,8 +78,12 @@ def _render_run(run: dict) -> None:
     if run.get("contexts"):
         with st.expander(f"Sources ({len(run['contexts'])})"):
             for ctx in run["contexts"]:
-                path = styles.source_label(ctx.get("metadata", {}))
-                st.markdown(f'<span class="fp-src-path">[{ctx.get("rank", "?")}] {path}</span>', unsafe_allow_html=True)
+                meta = ctx.get("metadata", {})
+                title = meta.get("title") or styles.source_label(meta)
+                url = meta.get("url")
+                label = f'<a href="{url}" target="_blank" class="fp-src-link">{title}</a>' if url else title
+                rank = ctx.get("rank", "?")
+                st.markdown(f'<span class="fp-src-path">[{rank}] {label}</span>', unsafe_allow_html=True)
 
     if attempts and st.button("⌨ Send to Playground", key="send_to_pg"):
         st.session_state.playground_code = attempts[max(attempts)]

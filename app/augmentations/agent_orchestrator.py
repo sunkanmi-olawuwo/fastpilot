@@ -139,6 +139,7 @@ class AgentOrchestrator:
                 "event": "exec_result",
                 "data": {
                     "attempt": attempt,
+                    "ok": result.ok,
                     "exit_code": result.exit_code,
                     "stdout": result.stdout,
                     "stderr": result.stderr,

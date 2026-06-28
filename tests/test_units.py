@@ -73,6 +73,40 @@ def test_source_label_falls_through_to_source_then_category():
     assert source_label({}) == "unknown"
 
 
+# --- formatting.source_title / source_url (human-friendly provenance) ------
+def test_source_title_docs_breadcrumb_with_acronyms():
+    from app.formatting import source_title
+
+    assert (
+        source_title({"file_path": "official_docs::advanced/security/oauth2-scopes/index.md"})
+        == "Advanced › Security › OAuth2 Scopes"
+    )
+    assert source_title({"file_path": "official_docs::tutorial/index.md"}) == "Tutorial"
+
+
+def test_source_title_github_and_fallback():
+    from app.formatting import source_title
+
+    assert source_title({"file_path": "github_issue::2603"}) == "GitHub Issue #2603"
+    assert source_title({"file_path": "github_discussion::8746"}) == "GitHub Discussion #8746"
+    assert source_title({"file_path": "plain-name.md"}) == "plain-name.md"  # no '::' → raw
+
+
+def test_source_url_maps_origin_to_canonical_url():
+    from app.formatting import source_url
+
+    assert (
+        source_url({"file_path": "official_docs::advanced/security/oauth2-scopes/index.md"})
+        == "https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/"
+    )
+    assert source_url({"file_path": "github_issue::2603"}) == "https://github.com/fastapi/fastapi/issues/2603"
+    assert (
+        source_url({"file_path": "github_discussion::8746"})
+        == "https://github.com/fastapi/fastapi/discussions/8746"
+    )
+    assert source_url({"file_path": "plain-name.md"}) == ""  # unknown shape → no link
+
+
 # --- rate limiter ---------------------------------------------------------
 def test_rate_limiter_in_memory_allows_then_blocks():
     from app.augmentations.rate_limit import RateLimiter

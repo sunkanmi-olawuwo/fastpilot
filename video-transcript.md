@@ -10,7 +10,8 @@
 - Have these **paste-ready** (typing on camera wastes seconds):
   - **Chat:** `How do I add JWT authentication to a FastAPI app?`
   - **Follow-up:** `can I make the token expire?`
-  - **Agent:** `Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input.`
+  - **Agent:** `Write and run a FastAPI endpoint POST /items that creates an item from a Pydantic body and returns the created item with HTTP status code 201. Include a self-test asserting the POST response status code is exactly 201.`
+    - *Chosen because it reliably fails the first attempt then self-corrects (~6/7 runs over real-service testing; 7/7 eventually succeed) — so the fail → fix → exit 0 beat actually appears on camera. Do one dry-run first; on the rare clean first pass, just re-run.*
 - Have the **architecture diagram** open in a tab (from the README) to flash during System Design.
 - Close other tabs/notifications. Record at 1280-wide so the UI matches the screenshots.
 
@@ -56,11 +57,11 @@
 > second model call."
 
 ### Q3 — Agent: write → run → self-correct (the differentiator)
-**[1:45 · ON SCREEN: switch to Agent. Send: "Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input."]**
+**[1:45 · ON SCREEN: switch to Agent. Send: "Write and run a FastAPI endpoint POST /items that creates an item from a Pydantic body and returns the created item with HTTP status code 201. Include a self-test asserting the POST response status code is exactly 201."]**
 
 > **SAY:** "Here's what makes it more than a chatbot. The Agent runs a **deterministic, code-driven
-> loop — not free-form tool-calling**. I'll ask it to write *and run* an endpoint that returns 422 on
-> bad input. Follow the timeline: it plans, retrieves grounding, writes code, and runs it in a
+> loop — not free-form tool-calling**. I'll ask it to write *and run* a create endpoint that returns
+> **201**. Follow the timeline: it plans, retrieves grounding, writes code, and runs it in a
 > **sandbox**. The first attempt **fails an assertion** — and instead of giving up, it reads the
 > traceback, **fixes the code, and re-runs to exit zero**. That self-correction loop takes
 > first-attempt success from about **50% to 100%** across our ten evaluation tasks."
