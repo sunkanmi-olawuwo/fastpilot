@@ -1,95 +1,48 @@
-# Video Transcript & Recording Script
+# Video Transcript
 
-> A **< 3-minute** screen recording against the **deployed public URL**. This file doubles as the
-> **teleprompter** (read the **SAY** lines aloud) and the **submitted transcript** (the SAY lines are
-> the transcript). Target ~3:00; a tighter ~2:35 path is noted at the end. Do one practice run first.
-
-## Before you hit record (warmup)
-- Open the **public frontend URL** (deployed — see `DEPLOY.md`). Sidebar expanded so the mode switcher shows. Pick light *or* dark and stay there.
-- **Warm the models:** hit `/health` and run one throwaway query ~5 min before recording, so the first demo answer streams fast instead of cold-starting.
-- Have these **paste-ready** (typing on camera wastes seconds):
-  - **Chat:** `How do I add JWT authentication to a FastAPI app?`
-  - **Follow-up:** `can I make the token expire?`
-  - **Agent:** `Write and run a FastAPI endpoint POST /items that creates an item from a Pydantic body and returns the created item with HTTP status code 201. Include a self-test asserting the POST response status code is exactly 201.`
-    - *Chosen because it reliably fails the first attempt then self-corrects (~6/7 runs over real-service testing; 7/7 eventually succeed) — so the fail → fix → exit 0 beat actually appears on camera. Do one dry-run first; on the rare clean first pass, just re-run.*
-- Have the **architecture diagram** open in a tab (from the README) to flash during System Design.
-- Close other tabs/notifications. Record at 1280-wide so the UI matches the screenshots.
-
----
+> Written version of the ~3-minute demo, recorded against the deployed app.
+> Video: https://www.loom.com/share/a1d6bf3ee7c54e5c93de4ac8c280992f · Live app: https://frontend-production-3afb.up.railway.app/
 
 ## Product Name
 **FastPilot** — *Learn FastAPI, fast.*
 
 ## Problem Setup
-**[0:00 · ON SCREEN: the welcome screen — "Learn FastAPI by building."]**
-
-> **SAY:** "Learning FastAPI is fragmented — the official docs, example repos, and GitHub issues all
-> live in different places, and reading them never proves you actually understood anything. This is
-> **FastPilot**: a production RAG system that closes the loop from reading to running, in three modes —
-> **Chat** to understand, **Agent** to watch, and **Playground** to practice."
+When you're learning or working with a new framework, the knowledge you need lives in different places,
+so you're constantly jumping from one tab to the next — and that context-switching is what makes
+learning feel fragmented. FastPilot is a RAG-based **FastAPI learning companion** for developers
+learning or working with FastAPI. It unifies the three scattered sources that knowledge normally lives
+across — the **official FastAPI documentation**, **GitHub code examples**, and **GitHub issues and
+discussion threads** — into a single, integrated learning and development environment. It has three
+modes: **Chat** (ask anything about FastAPI), **Agent** (watch examples get written, run, and
+self-corrected in real time), and **Playground** (practice and experiment with FastAPI yourself).
 
 ## System Design
-**[0:20 · ON SCREEN: flash the architecture diagram (README), then back to the app]**
-
-> **SAY:** "The frontend is Streamlit, streaming from a FastAPI backend over server-sent events. The
-> retrieval path isn't a default — I ran a pairwise bake-off and **this configuration won**: hybrid
-> search in Qdrant, dense Voyage embeddings plus BM25, fused and then **reranked** — the reranker alone
-> was worth **+21 points**. I even built a two-stage, LLM-routed variant and **deliberately skipped
-> it** — competitive on quality, but it added about **30 seconds a query**. Gemini 2.5 Flash generates;
-> Redis backs conversation memory and a semantic cache; and the whole system **degrades gracefully** —
-> if Redis or Qdrant drops, `/health` reports it instead of crashing. **Opik** traces every call."
+A **FastAPI backend** talks to a **Streamlit frontend** over **server-sent events (SSE)**, which is
+what gives the real-time, token-by-token streaming shown in the demo. Under the hood, retrieval is
+**hybrid search in Qdrant** — dense **Voyage** embeddings fused with **BM25** keyword search — followed
+by a **reranking pass**, and **Gemini 2.5 Flash** generates the answer. The key design decision is that
+retrieval is hybrid + reranked (not a single method), and generation is grounded in the retrieved
+chunks with inline citations so answers are verifiable rather than hallucinated.
 
 ## Live Demo
 
-### Q1 — Chat: cited answers
-**[0:55 · ON SCREEN: Chat mode. Send: "How do I add JWT authentication to a FastAPI app?"]**
+### Query 1: "How do I add JWT authentication to a FastAPI app?"
+- **What happened:** Asked in Chat mode. The query ran through hybrid retrieval + reranking, and Gemini generated the answer, streamed token by token over SSE.
+- **Result:** A grounded answer with code examples and **numbered citations** back to the source documents.
+- **What this shows:** Real-time streaming and **grounding** — answers cite the docs, so you can see it isn't hallucinating.
 
-> **SAY:** "Let's ask how to add JWT auth. The answer streams in token by token, and every claim
-> carries a **numbered citation** back to its source — here, the `OAuth2PasswordBearer` scheme straight
-> from the official docs. I can open the sources to see exactly what it grounded on."
+### Query 2: "can I make it expire?" (vague follow-up)
+- **What happened:** On its own the question is ambiguous, but the built-in **conditional query rewriting** used the conversation so far to rewrite it into a standalone question about **JWT token expiry** — shown as the "searched as" line right above the sources.
+- **Result:** A focused answer on setting JWT token expiry.
+- **What this shows:** **Conversation memory + query rewriting** handle real, context-dependent follow-ups instead of treating each turn in isolation.
 
-### Q2 — Follow-up rewrite + semantic cache
-**[1:20 · ON SCREEN: send the follow-up: "can I make the token expire?"]**
+### Query 3: "Write and run an endpoint that validates a user payload with Pydantic and returns 422 on bad input." (Agent mode)
+- **What happened:** A deterministic, code-driven agent (not free-form tool calling): it **plans → retrieves grounding from the corpus → writes the code → runs it in a locked-down sandbox**. The first attempt failed; instead of giving up, the agent read the **traceback**, fixed the code, and re-ran it.
+- **Result:** It **self-corrected to exit 0** — the code passed and the task completed. The generated code is shown.
+- **What this shows:** The augmentation — **grounded, self-correcting code execution** in a sandbox, the piece that makes FastPilot more than a chatbot.
 
-> **SAY:** "Now a vague follow-up — *can I make the token expire?* Watch the **'↻ searched as'** line:
-> it rewrites my question into a standalone query before retrieving, using the conversation so far. And
-> if I ask something it's already answered, it comes back **instantly from the semantic cache** — no
-> second model call."
+### Playground
+- **What happened:** One click sends the agent's generated code into the **Playground**, where you run it yourself in the **same sandbox**.
+- **What this shows:** Hands-on practice — the "do it yourself" stage that closes the learning loop (understand → watch → practice).
 
-### Q3 — Agent: write → run → self-correct (the differentiator)
-**[1:45 · ON SCREEN: switch to Agent. Send: "Write and run a FastAPI endpoint POST /items that creates an item from a Pydantic body and returns the created item with HTTP status code 201. Include a self-test asserting the POST response status code is exactly 201."]**
-
-> **SAY:** "Here's what makes it more than a chatbot. The Agent runs a **deterministic, code-driven
-> loop — not free-form tool-calling**. I'll ask it to write *and run* a create endpoint that returns
-> **201**. Follow the timeline: it plans, retrieves grounding, writes code, and runs it in a
-> **sandbox**. The first attempt **fails an assertion** — and instead of giving up, it reads the
-> traceback, **fixes the code, and re-runs to exit zero**. That self-correction loop takes
-> first-attempt success from about **50% to 100%** across our ten evaluation tasks."
-
-### Q3b — Playground + close
-**[2:35 · ON SCREEN: click "Send to Playground", change a value in the editor, click Run]**
-
-> **SAY:** "And I can send that exact code into the **Playground**, change it myself, and re-run it in
-> the **same locked-down sandbox — AST-scanned, no network, no secrets**. Everything here is measured —
-> production faithfulness came out at **0.992** — and I'm honest about the limits: that sandbox is
-> in-process defense-in-depth, with Docker isolation as the documented next step. That's
-> **FastPilot — learn FastAPI, fast.**"
-
-**[~3:00 · END — stop recording]**
-
----
-
-### Timing cheat-sheet
-| Beat | Mark | Budget |
-|---|---|---|
-| Hook + product | 0:00 | ~20s |
-| System design (evidence + skip + resilience) | 0:20 | ~35s |
-| Q1 Chat + citations | 0:55 | ~25s |
-| Q2 follow-up + cache | 1:20 | ~25s |
-| Q3 Agent self-correct | 1:45 | ~50s |
-| Q3b Playground + close | 2:35 | ~25s |
-
-**If you run long:** in System Design keep the bake-off sentence (hybrid + rerank **+21**) and the
-skipped two-stage variant, but drop the resilience line; and cut the "open the sources" aside in Q1.
-That buys ~25s and lands you under 2:35 — the design *judgment* (evidence + a rejected alternative)
-is what matters, so protect that over the component roll-call.
+**Closing:** That's FastPilot — *learn FastAPI, fast.*
