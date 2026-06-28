@@ -17,6 +17,11 @@ End-to-end demo-path verification surfaced three rough edges; all fixed and re-v
 - **`exec_result.ok`.** The agent SSE `exec_result` event now includes `ok` (mirrors
   `ExecuteResult.ok`) so the UI doesn't re-derive success from `exit_code`
   ([app/augmentations/agent_orchestrator.py]).
+- **Rewrite query shown above sources.** The "↻ searched as: <standalone>" caption moved from the
+  top of the answer to **just above the sources list** ([frontend/app.py]), so the user sees the
+  rewritten query right next to what it retrieved against. The standalone text is now captured from
+  the `rewrite` SSE event and persisted to message metadata (`standalone_query`), so it survives a
+  history re-render even when the `done` event omits it. (The "✎ rewritten" badge stays at the top.)
 - **Reliable demo task.** Empirically tested candidate Agent tasks against the real backend; the
   *"POST /items … returns the created item with HTTP 201, self-test asserts 201"* task fails the
   first attempt **6/7** runs (genuine AssertionError) and recovers **7/7** — so the fail→fix→exit-0
