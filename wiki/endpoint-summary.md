@@ -29,6 +29,7 @@ instances). Base URL defaults to `http://localhost:8000`; the frontend reaches i
 QueryRequest   { query: str(1..2000), session_id?: str, use_cache: bool = true }
 QueryResponse  { answer, contexts: ContextItem[], metadata, session_id, msg_id }
 ContextItem    { rank, score, content, metadata }
+               metadata { file_path, title, url, category, file_type }  # title/url are human-friendly provenance (see app/formatting.py)
 AgentRequest   { task: str(1..2000), session_id? }
 ExecuteRequest { code: str(1..100000), session_id }
 ExecuteResult  { ok, exit_code, stdout, stderr, duration_ms, guard? }
@@ -101,8 +102,10 @@ background generator task is cancelled (no orphaned Gemini calls).
 
 ## SSE contract — `/agent/stream`
 Streams the agent timeline events: `session → plan → retrieve → write → run → (fix → run)* →
-token × N → done{success}`. On error it always closes with a terminal `done{success:false}`
-so the UI spinner fails cleanly instead of hanging.
+token × N → done{success}`. Each `run` emits an `exec_result{attempt, ok, exit_code, stdout,
+stderr, duration_ms, blocked}` (the `ok` flag mirrors `ExecuteResult.ok` so the UI doesn't have
+to re-derive success from `exit_code`). On error it always closes with a terminal
+`done{success:false}` so the UI spinner fails cleanly instead of hanging.
 
 ## Playground endpoints
 - `/execute` — guards in order: `playground_enabled` (else `404`) → oversize (>10 KB soft

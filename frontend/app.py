@@ -105,12 +105,14 @@ def _render_sources(contexts: list[dict]) -> None:
     with st.expander(f"Sources ({len(contexts)})"):
         for ctx in contexts:
             meta = ctx.get("metadata", {})
-            path = styles.source_label(meta)
+            title = meta.get("title") or styles.source_label(meta)
+            url = meta.get("url")
+            label = f'<a href="{url}" target="_blank" class="fp-src-link">{title}</a>' if url else title
             ctype = meta.get("category", meta.get("file_type", "source"))
             score = ctx.get("score")
             score_txt = f" · {score:.2f}" if isinstance(score, (int, float)) else ""
             st.markdown(
-                f'<span class="fp-src-path">[{ctx.get("rank", "?")}] {path}</span> '
+                f'<span class="fp-src-path">[{ctx.get("rank", "?")}] {label}</span> '
                 f'<span class="fp-src-type">{ctype}</span>{score_txt}',
                 unsafe_allow_html=True,
             )

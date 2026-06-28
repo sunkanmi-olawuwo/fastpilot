@@ -36,7 +36,7 @@ from app.augmentations.code_executor import get_executor
 from app.augmentations.rate_limit import RateLimiter
 from app.augmentations.security import REFUSAL_MESSAGE, get_input_guard
 from app.config import get_settings
-from app.formatting import source_label
+from app.formatting import source_label, source_title, source_url
 from app.logging_config import configure_logging
 from app.models import (
     AgentRequest,
@@ -102,6 +102,8 @@ def _format_contexts(contexts) -> list[dict[str, Any]]:
                 "content": doc.content,
                 "metadata": {
                     "file_path": source_label(doc.meta),
+                    "title": source_title(doc.meta),
+                    "url": source_url(doc.meta),
                     "category": doc.meta.get("category", doc.meta.get("source", "unknown")),
                     "file_type": doc.meta.get("file_type", doc.meta.get("content_type", "unknown")),
                 },

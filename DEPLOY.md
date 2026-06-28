@@ -72,8 +72,10 @@ beats, then paste the link into the two placeholders in `README.md` (live demo +
 
 1. **Chat** — ask "How do I add JWT auth?" → show the streamed answer + a `[n]` citation.
 2. **Follow-up** — a short follow-up that hits the conversation memory / semantic cache.
-3. **Agent** — "Write and run an endpoint that returns 422 on bad input" → show the timeline
-   self-correct (Run → error → Fix & rerun → exit 0).
+3. **Agent** — "Write and run a POST /items endpoint that returns the created item with HTTP 201,
+   with a self-test asserting status 201" → show the timeline self-correct (Run → error → Fix &
+   rerun → exit 0). This task reliably fails the first attempt then recovers (~6/7 runs), so the
+   self-correct beat actually shows; do a dry-run first and re-run on the rare clean first pass.
 4. **Playground** — tweak the agent's code and re-run it yourself.
 
 For an animated hero GIF in the README, drop the file at `docs/screenshots/hero.gif` and swap the
