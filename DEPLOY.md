@@ -85,3 +85,21 @@ Talking points for the recording live in [`video-transcript.md`](video-transcrip
 ## Local parity
 `docker compose up backend frontend` (from the repo root) mirrors this topology against the same
 managed Redis/Qdrant — same Dockerfiles, so "works in compose" ≈ "works on Railway."
+
+## GHCR images for SoloForge staging
+
+The `publish-ghcr.yml` workflow builds the backend and frontend Docker images for VPS staging.
+It does not replace Railway production deployment.
+
+On pull requests, the workflow builds both images without pushing them. On push to `main`, or a
+manual workflow dispatch, it publishes:
+
+```text
+ghcr.io/sunkanmi-olawuwo/fastpilot-backend:main
+ghcr.io/sunkanmi-olawuwo/fastpilot-backend:sha-<short-sha>
+ghcr.io/sunkanmi-olawuwo/fastpilot-frontend:main
+ghcr.io/sunkanmi-olawuwo/fastpilot-frontend:sha-<short-sha>
+```
+
+Runtime secrets are still supplied by the target platform. Do not bake Qdrant, Redis, Voyage,
+Google, or Opik credentials into the images.
