@@ -9,6 +9,7 @@ widgets get stable keys).
 from __future__ import annotations
 
 import api_client
+import feature_flags
 import requests
 import streamlit as st
 import styles
@@ -85,7 +86,7 @@ def _render_run(run: dict) -> None:
                 rank = ctx.get("rank", "?")
                 st.markdown(f'<span class="fp-src-path">[{rank}] {label}</span>', unsafe_allow_html=True)
 
-    if attempts and st.button("⌨ Send to Playground", key="send_to_pg"):
+    if attempts and feature_flags.playground_enabled() and st.button("⌨ Send to Playground", key="send_to_pg"):
         st.session_state.playground_code = attempts[max(attempts)]
         st.session_state.pending_mode = "⌨ Playground"  # applied before the mode radio (app.main)
         st.rerun()
