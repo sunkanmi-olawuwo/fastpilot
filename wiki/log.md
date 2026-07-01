@@ -5,6 +5,13 @@ rule 4). Keep entries short: what changed, why, and which wiki pages were touche
 
 ---
 
+## 2026-07-01 — Watchtower auto-update proof marker
+
+Added non-runtime proof marker files to the backend and frontend Docker build contexts so a merge to
+`main` changes both GHCR image digests. This is used to prove the parallel deployment path: Railway
+production still deploys from `main`, GHCR publishes `:main`, and SoloForge staging updates through
+Watchtower.
+
 ## 2026-06-28 — Demo polish: source titles/URLs, exec_result `ok`, reliable agent task
 
 End-to-end demo-path verification surfaced three rough edges; all fixed and re-verified live.
