@@ -15,6 +15,7 @@ import uuid
 
 import agent_view
 import api_client
+import feature_flags
 import playground_view
 import requests
 import streamlit as st
@@ -57,6 +58,10 @@ def _init_state() -> None:
     ss.setdefault("theme", _active_theme())
 
 
+def _available_modes() -> list[str]:
+    return MODES if feature_flags.playground_enabled() else MODES[:2]
+
+
 def _new_chat() -> None:
     st.session_state.messages = []
     st.session_state.session_id = f"sess_{uuid.uuid4().hex}"
@@ -65,13 +70,17 @@ def _new_chat() -> None:
 
 
 def _sidebar() -> None:
+    modes = _available_modes()
+    if st.session_state.mode not in modes:
+        st.session_state.mode = MODES[0]
+
     with st.sidebar:
         st.markdown("### ⚡ FastPilot")
         st.button("＋ New Chat", use_container_width=True, on_click=_new_chat)
         st.divider()
         st.radio(
             "Mode",
-            MODES,
+            modes,
             key="mode",
             format_func=lambda m: _MODE_LABEL[m],
         )

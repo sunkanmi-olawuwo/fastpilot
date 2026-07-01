@@ -44,11 +44,13 @@ a broken build must never reach production:
    values as your local `.env`** — copy them straight across:
    - **backend:** `QDRANT_URL`, `QDRANT_API_KEY`, `GOOGLE_API_KEY`, `VOYAGE_API_KEY`,
      `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_SSL=true`, `QDRANT_COLLECTION=rag_accelerator_capstone_final`,
-     `CACHE_DISTANCE_THRESHOLD=0.16`, `OPIK_API_KEY`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME=fastpilot`.
+     `CACHE_DISTANCE_THRESHOLD=0.16`, `OPIK_API_KEY`, `OPIK_WORKSPACE`, `OPIK_PROJECT_NAME=fastpilot`,
+     `PLAYGROUND_ENABLED=false` for staging or production unless you have explicitly accepted the risk.
    - **frontend:** `API_BASE_URL=http://backend.railway.internal:${{backend.PORT}}`
      (Railway's cross-service reference — resolves to the backend's injected port over the private network).
      `BACKEND_URL` is accepted as an alias if `API_BASE_URL` is unset; set the full base URL
-     (scheme, no trailing slash). The client appends `/query`, `/health`, etc.
+     (scheme, no trailing slash). The client appends `/query`, `/health`, etc. Also set
+     `PLAYGROUND_ENABLED=false` to hide Playground from the Streamlit sidebar.
 4. **Public domain:** Settings → Networking → **Generate Domain on the `frontend` service ONLY**.
    Leave the backend with **no** public domain — it's reachable only at `backend.railway.internal`.
 5. `$PORT` is handled — both Dockerfiles bind Railway's injected `$PORT`

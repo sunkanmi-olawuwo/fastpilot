@@ -212,6 +212,29 @@ def test_playground_fallback_editor_runs(monkeypatch):
     assert at.session_state["pg_result"]["stdout"] == "status 200"
 
 
+def test_playground_mode_hidden_when_disabled(monkeypatch):
+    monkeypatch.setenv("PLAYGROUND_ENABLED", "false")
+    at = AppTest.from_file(_APP, default_timeout=30)
+    at.session_state["mode"] = "⌨ Playground"
+    at.run()
+    assert not at.exception
+    assert at.session_state["mode"] == "💬 Chat"
+    assert all("Playground" not in str(radio.value) for radio in at.radio)
+
+
+def test_agent_send_to_playground_hidden_when_disabled(monkeypatch):
+    import api_client
+
+    monkeypatch.setenv("PLAYGROUND_ENABLED", "false")
+    monkeypatch.setattr(api_client, "stream_agent", _agent_stream)
+    at = AppTest.from_file(_APP, default_timeout=30)
+    at.session_state["mode"] = "▶ Agent"
+    at.session_state["agent_pending"] = "Write and run an endpoint"
+    at.run()
+    assert not at.exception
+    assert not any("Send to Playground" in b.label for b in at.button)
+
+
 def test_agent_teaser_chip_switches_mode_without_crash(monkeypatch):
     """Regression: clicking a mode-switch chip must not write the widget-bound `mode`
     key after the radio is built (the StreamlitAPIException the visual suite caught)."""
